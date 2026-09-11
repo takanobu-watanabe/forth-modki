@@ -126,6 +126,21 @@ void test_parse_int_overflow(void) {
     fclose(src.fp);
 }
 
+void test_parse_one_int(void){
+    CharSource src = make_src_from_string("42");
+    Token t = { .type = TOKEN_EOF };
+
+    bool b = parse_one(&src, &t);
+    UT_TRUE(b);
+    if (b){
+        UT_EQ_INT(TOKEN_INT, t.type);
+        if (t.type == TOKEN_INT) {
+            UT_EQ_INT(42, t.u.ival);
+        }
+    }
+    fclose(src.fp);
+}
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -134,7 +149,7 @@ int main(void) {
     test_parse_int_non_digit();
     test_parse_int_max();
     test_parse_int_overflow();
-
+    test_parse_one_int();
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

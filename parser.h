@@ -1,3 +1,6 @@
+#ifndef PARSER_H
+#define PARSER_H
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -39,3 +42,4 @@ bool parse_int(CharSource *src, int *out);
 bool parse_one(CharSource *src, Token *out_token);
 
 void parser_print_all(CharSource *src);
+#endif

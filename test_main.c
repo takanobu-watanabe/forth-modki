@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "test_util.h"
 #include "stack.h"
+#include "eval.h"
 
 // 文字列を入力にした CharSource を作るヘルパー
 CharSource make_src_from_string(const char *str) {
@@ -269,6 +270,37 @@ void test_stack_exch(void) {
 }
 
 
+void test_eval_push_only(void) {
+    CharSource src = make_src_from_string("1 2 3");
+    Stack *st = stack_new(10);
+    eval(&src, st);
+    // size が 3、pop が 3 → 2 → 1 の順
+    UT_EQ_INT(3, stack_size(st)); 
+    UT_EQ_INT(3, stack_pop(st));
+    UT_EQ_INT(2, stack_pop(st));
+    UT_EQ_INT(1, stack_pop(st));
+    stack_free(st);
+}
+
+void test_eval_add(void) {
+    CharSource src = make_src_from_string("1 2 add");
+    Stack *st = stack_new(10);
+    eval(&src, st);
+    UT_EQ_INT(1, stack_size(st)); 
+    UT_EQ_INT(3, stack_pop(st));
+    stack_free(st);
+}
+
+void test_eval_add_twice(void) {
+    CharSource src = make_src_from_string("1 2 add 10 add");
+    Stack *st = stack_new(10);
+    eval(&src, st);
+    UT_EQ_INT(1, stack_size(st)); 
+    UT_EQ_INT(13, stack_pop(st));
+    stack_free(st);
+}
+
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -287,11 +319,9 @@ int main(void) {
     test_stack_dup();
     test_stack_dup_keeps_lower();
     test_stack_exch();
-
-    printf("--- parser_print_all ---\n");
-    CharSource src = make_src_from_string("/x 5 def x");
-    parser_print_all(&src);
-    fclose(src.fp);
+    test_eval_push_only();
+    test_eval_add();
+    test_eval_add_twice();
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

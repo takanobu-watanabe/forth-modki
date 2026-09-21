@@ -1,8 +1,8 @@
 CFLAGS = -Wall -Wextra -std=c11 -g
 
 UNITTEST = unittest
-SRCS = test_main.c parser.c stack.c
-HDRS = parser.h stack.h test_util.h
+SRCS = test_main.c parser.c stack.c eval.c
+HDRS = parser.h stack.h eval.h test_util.h
 
 .PHONY: test clean
 

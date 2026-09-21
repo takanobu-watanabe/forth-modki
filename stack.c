@@ -67,3 +67,11 @@ void stack_dup(Stack *stack) {
     top_val = stack_top(stack);
     stack_push(stack, top_val);
 }
+
+void stack_exch(Stack *stack){
+    int val = stack_pop(stack); 
+    int val2 = stack_pop(stack); 
+    stack_push(stack, val); 
+    stack_push(stack, val2); 
+}
+

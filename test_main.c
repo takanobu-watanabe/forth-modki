@@ -245,7 +245,6 @@ void test_stack_dup_keeps_lower(void) {
     stack_push(st, 2);
     stack_dup(st);
 
-    // ここに検証を書く: size が 3、pop が 2 → 2 → 1 の順
     UT_EQ_INT(3, stack_size(st));
     
     UT_EQ_INT(2, stack_pop(st));
@@ -254,6 +253,21 @@ void test_stack_dup_keeps_lower(void) {
 
     stack_free(st);
 }
+
+void test_stack_exch(void) {
+    Stack *st = stack_new(10);
+
+    stack_push(st, 1);
+    stack_push(st, 2);
+    stack_exch(st);
+
+    UT_EQ_INT(2, stack_size(st)); 
+    UT_EQ_INT(1, stack_pop(st));
+    UT_EQ_INT(2, stack_pop(st));
+    stack_free(st);
+
+}
+
 
 int main(void) {
     test_parse_int_single();
@@ -272,6 +286,7 @@ int main(void) {
     test_stack_top_does_not_pop();
     test_stack_dup();
     test_stack_dup_keeps_lower();
+    test_stack_exch();
 
     printf("--- parser_print_all ---\n");
     CharSource src = make_src_from_string("/x 5 def x");

@@ -1,18 +1,30 @@
 CFLAGS = -Wall -Wextra -std=c11 -g
 
 UNITTEST = unittest
-SRCS = test_main.c parser.c stack.c eval.c
-HDRS = parser.h stack.h eval.h test_util.h
+TARGET   = forth_modoki
 
-.PHONY: test clean
+# 両方のビルドで共有するソース（main を持たないもの）
+LIB_SRCS  = parser.c stack.c eval.c
+TEST_SRCS = test_main.c $(LIB_SRCS)
+MAIN_SRCS = main.c $(LIB_SRCS)
+HDRS      = parser.h stack.h eval.h test_util.h
+
+.PHONY: all test clean
+
+# 引数なしの make で両方ビルドする
+all: $(UNITTEST) $(TARGET)
 
 # テストを走らせる（バイナリが最新でも必ず実行される）
 test: $(UNITTEST)
 	./$(UNITTEST)
 
-# テストバイナリのビルド（ソース/ヘッダが新しいときだけ再ビルド）
-$(UNITTEST): $(SRCS) $(HDRS)
-	$(CC) $(CFLAGS) -o $(UNITTEST) $(SRCS)
+# テストバイナリ（main は test_main.c のもの）
+$(UNITTEST): $(TEST_SRCS) $(HDRS)
+	$(CC) $(CFLAGS) -o $(UNITTEST) $(TEST_SRCS)
+
+# 本体（main は main.c のもの）
+$(TARGET): $(MAIN_SRCS) $(HDRS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(MAIN_SRCS)
 
 clean:
-	rm -rf $(UNITTEST) test *.dSYM
+	rm -rf $(UNITTEST) $(TARGET) test *.dSYM

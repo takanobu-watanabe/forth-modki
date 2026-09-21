@@ -4,12 +4,16 @@
 #include "stack.h"
 #include "eval.h"
 #include "primitives.h"
+#include "exec_array.h"
 
 int main(int argc, char **argv) {
     FILE *fp;
     CharSource src;
     Stack *st;
     Dict *dict = dict_new();
+
+    // 演習8-1: items[] の分がサイズに含まれていないことの目視確認
+    printf("sizeof(ExecArray) = %zu\n", sizeof(ExecArray));
 
     register_primitives(dict);
 

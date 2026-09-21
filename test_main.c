@@ -441,6 +441,23 @@ void test_dict_many_entries(void) {
     dict_free(dict);
 }
 
+void test_exec_array_new(void) {
+    ExecArray *ea = exec_array_new(3);
+
+    UT_EQ_INT(3, ea->count);
+
+    ea->items[0] = element_int(1);
+    ea->items[1] = element_int(2);
+    ea->items[2] = element_int(3);
+
+    UT_EQ_ELEM_INT(1, ea->items[0]);
+    UT_EQ_ELEM_INT(2, ea->items[1]);
+    UT_EQ_ELEM_INT(3, ea->items[2]);
+
+    exec_array_free(ea);
+}
+
+
 
 
 int main(void) {
@@ -473,6 +490,7 @@ int main(void) {
     test_dict_get_undefined_returns_false();
     test_eval_def_and_use();
     test_dict_many_entries();
+    test_exec_array_new();
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

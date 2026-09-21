@@ -208,6 +208,11 @@ int main(void) {
     test_parse_one_literal_name();
     test_parse_one_open_brace();
     test_parse_one_close_brace();
+    printf("--- parser_print_all ---\n");
+    CharSource src = make_src_from_string("/x 5 def x");
+    parser_print_all(&src);
+    fclose(src.fp);
+
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

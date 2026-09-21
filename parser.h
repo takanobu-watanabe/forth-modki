@@ -37,3 +37,5 @@ void cl_ungetc(CharSource *src, int c);
 bool parse_int(CharSource *src, int *out);
 
 bool parse_one(CharSource *src, Token *out_token);
+
+void parser_print_all(CharSource *src);

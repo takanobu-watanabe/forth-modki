@@ -141,3 +141,29 @@ bool parse_one(CharSource *src, Token *out_token) {
     }
     return false;
 }
+
+void parser_print_all(CharSource *src) {
+    Token out_token;
+
+    while (parse_one(src, &out_token)) {
+        switch (out_token.type) {
+            case TOKEN_LITERAL_NAME:
+                printf("LIT %s\n", out_token.u.name);
+                break;
+            case TOKEN_INT:
+                printf("INT %d\n", out_token.u.ival);
+                break;
+            case TOKEN_EXEC_NAME:
+                printf("EXEC %s\n", out_token.u.name);
+                break;
+            case TOKEN_OPEN_BRACE:
+                printf("open_brace\n");
+                break;
+            case TOKEN_CLOSE_BRACE:
+                printf("close_brace\n");
+                break;
+            default:
+                break;
+        }
+    }
+}

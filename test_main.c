@@ -2,6 +2,7 @@
 #include <string.h>
 #include "parser.h"
 #include "test_util.h"
+#include "stack.h"
 
 // 文字列を入力にした CharSource を作るヘルパー
 CharSource make_src_from_string(const char *str) {
@@ -195,6 +196,37 @@ void test_parse_one_close_brace(void) {
     fclose(src.fp);
 }
 
+void test_stack_push_pop(void) {
+    Stack *st = stack_new(10);
+    int val;
+
+    stack_push(st, 1);
+    stack_push(st, 2);
+    
+    val = stack_pop(st);
+    UT_EQ_INT(2, val);
+
+    val = stack_pop(st);
+    UT_EQ_INT(1, val);
+
+    UT_TRUE(stack_is_empty(st));
+
+    
+    stack_free(st);
+}
+
+void test_stack_top_does_not_pop(void) {
+    Stack *st = stack_new(10);
+
+    stack_push(st, 5);
+    UT_EQ_INT(5, stack_top(st));
+    UT_EQ_INT(1, stack_size(st));
+    stack_free(st);
+
+}
+
+
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -208,11 +240,14 @@ int main(void) {
     test_parse_one_literal_name();
     test_parse_one_open_brace();
     test_parse_one_close_brace();
+    test_stack_push_pop();
+    test_stack_top_does_not_pop();
+
     printf("--- parser_print_all ---\n");
     CharSource src = make_src_from_string("/x 5 def x");
     parser_print_all(&src);
     fclose(src.fp);
-
+    test_stack_push_pop();
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

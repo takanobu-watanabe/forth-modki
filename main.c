@@ -21,7 +21,14 @@ int main(int argc, char **argv) {
     src.fp = fp;
     st = stack_new(100);
     eval(&src, st);
-    printf("result: %d\n", stack_pop(st));  
+    {
+        Element result = stack_pop(st);
+        if (result.type == ELEM_INT) {
+            printf("result: %d\n", result.u.ival);
+        } else {
+            printf("result: /%s\n", result.u.name);
+        }
+    }
     fclose(fp); 
     stack_free(st); 
     return 0;

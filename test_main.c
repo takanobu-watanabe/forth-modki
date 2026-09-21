@@ -6,6 +6,15 @@
 #include "eval.h"
 #include "dict.h"
 
+// Element が ELEM_INT で、期待した値を持つことを検証する
+#define UT_EQ_ELEM_INT(expected, actual) do { \
+    Element _el = (actual); \
+    UT_EQ_INT(ELEM_INT, _el.type); \
+    if (_el.type == ELEM_INT) { \
+        UT_EQ_INT((expected), _el.u.ival); \
+    } \
+} while (0)
+
 // 文字列を入力にした CharSource を作るヘルパー
 CharSource make_src_from_string(const char *str) {
     CharSource src;
@@ -200,16 +209,12 @@ void test_parse_one_close_brace(void) {
 
 void test_stack_push_pop(void) {
     Stack *st = stack_new(10);
-    int val;
-
-    stack_push(st, 1);
-    stack_push(st, 2);
+    stack_push(st, element_int(1));
+    stack_push(st, element_int(2));
     
-    val = stack_pop(st);
-    UT_EQ_INT(2, val);
+    UT_EQ_ELEM_INT(2, stack_pop(st));
 
-    val = stack_pop(st);
-    UT_EQ_INT(1, val);
+    UT_EQ_ELEM_INT(1, stack_pop(st));
 
     UT_TRUE(stack_is_empty(st));
 
@@ -220,8 +225,8 @@ void test_stack_push_pop(void) {
 void test_stack_top_does_not_pop(void) {
     Stack *st = stack_new(10);
 
-    stack_push(st, 5);
-    UT_EQ_INT(5, stack_top(st));
+    stack_push(st, element_int(5));
+    UT_EQ_ELEM_INT(5, stack_top(st));
     UT_EQ_INT(1, stack_size(st));
     stack_free(st);
 }
@@ -229,11 +234,11 @@ void test_stack_top_does_not_pop(void) {
 void test_stack_dup(void) {
     Stack *st = stack_new(10);
 
-    stack_push(st, 5);
+    stack_push(st, element_int(5));
     stack_dup(st);
     UT_EQ_INT(2, stack_size(st));  
-    UT_EQ_INT(5, stack_pop(st));
-    UT_EQ_INT(5, stack_pop(st));
+    UT_EQ_ELEM_INT(5, stack_pop(st));
+    UT_EQ_ELEM_INT(5, stack_pop(st));
     UT_TRUE(stack_is_empty(st));
   
     
@@ -243,15 +248,15 @@ void test_stack_dup(void) {
 void test_stack_dup_keeps_lower(void) {
     Stack *st = stack_new(10);
 
-    stack_push(st, 1);
-    stack_push(st, 2);
+    stack_push(st, element_int(1));
+    stack_push(st, element_int(2));
     stack_dup(st);
 
     UT_EQ_INT(3, stack_size(st));
     
-    UT_EQ_INT(2, stack_pop(st));
-    UT_EQ_INT(2, stack_pop(st));
-    UT_EQ_INT(1, stack_pop(st));
+    UT_EQ_ELEM_INT(2, stack_pop(st));
+    UT_EQ_ELEM_INT(2, stack_pop(st));
+    UT_EQ_ELEM_INT(1, stack_pop(st));
 
     stack_free(st);
 }
@@ -259,13 +264,13 @@ void test_stack_dup_keeps_lower(void) {
 void test_stack_exch(void) {
     Stack *st = stack_new(10);
 
-    stack_push(st, 1);
-    stack_push(st, 2);
+    stack_push(st, element_int(1));
+    stack_push(st, element_int(2));
     stack_exch(st);
 
     UT_EQ_INT(2, stack_size(st)); 
-    UT_EQ_INT(1, stack_pop(st));
-    UT_EQ_INT(2, stack_pop(st));
+    UT_EQ_ELEM_INT(1, stack_pop(st));
+    UT_EQ_ELEM_INT(2, stack_pop(st));
     stack_free(st);
 
 }
@@ -277,9 +282,9 @@ void test_eval_push_only(void) {
     eval(&src, st);
     // size が 3、pop が 3 → 2 → 1 の順
     UT_EQ_INT(3, stack_size(st)); 
-    UT_EQ_INT(3, stack_pop(st));
-    UT_EQ_INT(2, stack_pop(st));
-    UT_EQ_INT(1, stack_pop(st));
+    UT_EQ_ELEM_INT(3, stack_pop(st));
+    UT_EQ_ELEM_INT(2, stack_pop(st));
+    UT_EQ_ELEM_INT(1, stack_pop(st));
     stack_free(st);
 }
 
@@ -288,7 +293,7 @@ void test_eval_add(void) {
     Stack *st = stack_new(10);
     eval(&src, st);
     UT_EQ_INT(1, stack_size(st)); 
-    UT_EQ_INT(3, stack_pop(st));
+    UT_EQ_ELEM_INT(3, stack_pop(st));
     stack_free(st);
 }
 
@@ -297,7 +302,7 @@ void test_eval_add_twice(void) {
     Stack *st = stack_new(10);
     eval(&src, st);
     UT_EQ_INT(1, stack_size(st)); 
-    UT_EQ_INT(13, stack_pop(st));
+    UT_EQ_ELEM_INT(13, stack_pop(st));
     stack_free(st);
 }
 

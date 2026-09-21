@@ -4,10 +4,10 @@ UNITTEST = unittest
 TARGET   = forth_modoki
 
 # 両方のビルドで共有するソース（main を持たないもの）
-LIB_SRCS  = parser.c stack.c eval.c dict.c
+LIB_SRCS  = parser.c stack.c eval.c dict.c element.c
 TEST_SRCS = test_main.c $(LIB_SRCS)
 MAIN_SRCS = main.c $(LIB_SRCS)
-HDRS      = parser.h stack.h eval.h dict.h test_util.h
+HDRS      = parser.h stack.h eval.h dict.h element.h test_util.h
 
 .PHONY: all test clean
 

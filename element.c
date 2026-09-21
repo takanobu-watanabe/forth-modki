@@ -1,0 +1,21 @@
+#include "element.h"
+
+#include <string.h>
+#include <assert.h>
+
+Element element_int(int val) {
+    Element e;
+
+    e.type = ELEM_INT;
+    e.u.ival = val;
+    return e;
+}
+
+Element element_literal_name(const char *name) {
+    Element e;
+
+    assert(strlen(name) < ELEMENT_NAME_MAX_SIZE);
+    e.type = ELEM_LITERAL_NAME;
+    strcpy(e.u.name, name);
+    return e;
+}

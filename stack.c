@@ -6,7 +6,7 @@
 
 // 中身は stack.c に隠す（使う側は Stack* しか扱えない）
 struct Stack {
-    int *data;     // 値を入れる配列（malloc で確保）
+    Element *data; // 値を入れる配列（malloc で確保）
     int capacity;  // 配列の要素数（確保した上限）
     int top;       // 次に push する位置
 };
@@ -14,7 +14,7 @@ struct Stack {
 Stack* stack_new(int capacity) {
     Stack *stack = malloc(sizeof(Stack));
     assert(stack != NULL);
-    stack->data = malloc(sizeof(int) * capacity);
+    stack->data = malloc(sizeof(Element) * capacity);
     stack->capacity = capacity;
     stack->top = 0;
     return stack;
@@ -29,19 +29,19 @@ void stack_free(Stack *stack) {
     }
 }
 
-void stack_push(Stack *stack, int val) {
+void stack_push(Stack *stack, Element val) {
     assert(stack_size(stack) < stack->capacity);
     stack->data[stack->top] = val;
     stack->top += 1;
 }
 
-int stack_top(Stack *stack) {
+Element stack_top(Stack *stack) {
     assert(!stack_is_empty(stack));
     return stack->data[stack->top-1];
 }
 
-int stack_pop(Stack *stack) {
-    int val;
+Element stack_pop(Stack *stack) {
+    Element val;
 
     assert(!stack_is_empty(stack));
     stack->top -= 1;
@@ -62,15 +62,15 @@ int stack_size(Stack *stack) {
 }
 
 void stack_dup(Stack *stack) {
-    int top_val;
+    Element top_val;
 
     top_val = stack_top(stack);
     stack_push(stack, top_val);
 }
 
 void stack_exch(Stack *stack){
-    int val = stack_pop(stack); 
-    int val2 = stack_pop(stack); 
+    Element val = stack_pop(stack);
+    Element val2 = stack_pop(stack);
     stack_push(stack, val); 
     stack_push(stack, val2); 
 }

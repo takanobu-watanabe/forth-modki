@@ -1,6 +1,5 @@
 #include "parser.h"
 #include <limits.h>
-#include "stack.h"
 
 int  cl_getc(CharSource *src) {
     return fgetc(src->fp);

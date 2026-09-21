@@ -27,13 +27,6 @@ typedef struct {
     } u;
 } Token;
 
-struct Stack_ {
-    int *data;     // 値を入れる配列（malloc で確保）
-    int capacity;  // 配列の要素数（確保した上限）
-    int top;       // 次に push する位置
-};
-typedef struct Stack Stack_;
- 
 int  cl_getc(CharSource *src);
 void cl_ungetc(CharSource *src, int c);
 

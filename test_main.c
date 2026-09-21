@@ -4,6 +4,7 @@
 #include "test_util.h"
 #include "stack.h"
 #include "eval.h"
+#include "dict.h"
 
 // 文字列を入力にした CharSource を作るヘルパー
 CharSource make_src_from_string(const char *str) {
@@ -300,6 +301,49 @@ void test_eval_add_twice(void) {
     stack_free(st);
 }
 
+void test_dict_put_get(void) {
+    Dict *dict = dict_new();
+    int val;
+    bool found;
+
+    dict_put(dict, "x", 5);
+
+    found = dict_get(dict, "x", &val);
+    UT_TRUE(found);
+    if (found) {
+        UT_EQ_INT(5, val);
+    }
+
+    dict_free(dict);
+}
+
+void test_dict_put_overwrites(void) {
+    Dict *dict = dict_new();
+    int val;
+    bool found;
+
+    dict_put(dict, "x", 5);
+    dict_put(dict, "x", 10);
+
+    found = dict_get(dict, "x", &val);
+    UT_TRUE(found);
+    if (found) {
+        UT_EQ_INT(10, val);
+    }
+
+    dict_free(dict);
+}
+
+void test_dict_get_undefined_returns_false(void) {
+    Dict *dict = dict_new();
+    int val;
+    bool found;
+
+    found = dict_get(dict, "y", &val);
+    UT_TRUE(!found);
+
+    dict_free(dict);
+}
 
 int main(void) {
     test_parse_int_single();
@@ -322,6 +366,9 @@ int main(void) {
     test_eval_push_only();
     test_eval_add();
     test_eval_add_twice();
+    test_dict_put_get();
+    test_dict_put_overwrites();
+    test_dict_get_undefined_returns_false();
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

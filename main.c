@@ -8,6 +8,7 @@ int main(int argc, char **argv) {
     FILE *fp;
     CharSource src;
     Stack *st;
+    Dict *dict = dict_new();
 
     if (argc < 2) {
         fprintf(stderr, "usage: %s <file.ps>\n", argv[0]);
@@ -20,7 +21,7 @@ int main(int argc, char **argv) {
     }
     src.fp = fp;
     st = stack_new(100);
-    eval(&src, st);
+    eval(&src, st, dict);
     {
         Element result = stack_pop(st);
         if (result.type == ELEM_INT) {
@@ -30,7 +31,8 @@ int main(int argc, char **argv) {
         }
     }
     fclose(fp); 
-    stack_free(st); 
+    stack_free(st);
+    dict_free(dict);
     return 0;
 
 }

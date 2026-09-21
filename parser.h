@@ -14,12 +14,12 @@ typedef struct {
 } CharSource;
 
 typedef enum {
-    TOKEN_INT,
-    TOKEN_EXEC_NAME,
-    TOKEN_LITERAL_NAME,
-    TOKEN_OPEN_BRACE,
-    TOKEN_CLOSE_BRACE,
-    TOKEN_EOF,
+    TOKEN_INT = 0,
+    TOKEN_EXEC_NAME = 1,
+    TOKEN_LITERAL_NAME = 2,
+    TOKEN_OPEN_BRACE = 3,
+    TOKEN_CLOSE_BRACE = 4,
+    TOKEN_EOF = 5,
 } TokenType;
 
 typedef struct {

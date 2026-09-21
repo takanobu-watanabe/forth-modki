@@ -278,8 +278,9 @@ void test_stack_exch(void) {
 
 void test_eval_push_only(void) {
     CharSource src = make_src_from_string("1 2 3");
+    Dict *dict = dict_new();
     Stack *st = stack_new(10);
-    eval(&src, st);
+    eval(&src, st, dict);
     // size が 3、pop が 3 → 2 → 1 の順
     UT_EQ_INT(3, stack_size(st)); 
     UT_EQ_ELEM_INT(3, stack_pop(st));
@@ -291,16 +292,21 @@ void test_eval_push_only(void) {
 void test_eval_add(void) {
     CharSource src = make_src_from_string("1 2 add");
     Stack *st = stack_new(10);
-    eval(&src, st);
+    Dict *dict = dict_new();
+
+    eval(&src, st, dict);
     UT_EQ_INT(1, stack_size(st)); 
     UT_EQ_ELEM_INT(3, stack_pop(st));
     stack_free(st);
+    dict_free(dict);
 }
 
 void test_eval_add_twice(void) {
     CharSource src = make_src_from_string("1 2 add 10 add");
     Stack *st = stack_new(10);
-    eval(&src, st);
+    Dict *dict = dict_new();
+
+    eval(&src, st, dict);
     UT_EQ_INT(1, stack_size(st)); 
     UT_EQ_ELEM_INT(13, stack_pop(st));
     stack_free(st);
@@ -350,6 +356,20 @@ void test_dict_get_undefined_returns_false(void) {
     dict_free(dict);
 }
 
+void test_eval_def_and_use(void) {
+    CharSource src = make_src_from_string("/x 5 def x x add");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+
+    eval(&src, st, dict);
+    UT_EQ_INT(1, stack_size(st)); 
+    UT_EQ_ELEM_INT(10, stack_pop(st));
+
+    stack_free(st);
+    dict_free(dict);
+}
+
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -374,6 +394,7 @@ int main(void) {
     test_dict_put_get();
     test_dict_put_overwrites();
     test_dict_get_undefined_returns_false();
+    test_eval_def_and_use();
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

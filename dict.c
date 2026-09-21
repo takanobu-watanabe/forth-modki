@@ -10,7 +10,7 @@
 // 同じバケットに落ちたエントリを連結リストでつなぐ（チェイン法）
 typedef struct EntryNode {
     char name[DICT_NAME_MAX_SIZE];
-    int value;
+    Element value;
     struct EntryNode *next;
 } EntryNode;
 
@@ -58,7 +58,7 @@ void dict_free(Dict *dict) {
     free(dict);
 }
 
-void dict_put(Dict *dict, const char *name, int value) {
+void dict_put(Dict *dict, const char *name, Element value) {
     unsigned int h = bucket_index(name);
     EntryNode *node;
 
@@ -80,7 +80,7 @@ void dict_put(Dict *dict, const char *name, int value) {
     dict->buckets[h] = node;
 }
 
-bool dict_get(Dict *dict, const char *name, int *out_value) {
+bool dict_get(Dict *dict, const char *name, Element *out_value) {
     unsigned int h = bucket_index(name);
 
     for (EntryNode *node = dict->buckets[h]; node != NULL; node = node->next) {

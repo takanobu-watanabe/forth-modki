@@ -17,22 +17,21 @@ void eval(CharSource *src, Stack *st, Dict *dict) {
                 stack_push(st, element_literal_name(out_token.u.name));
                 break;
             case TOKEN_EXEC_NAME:
-                if (strcmp(out_token.u.name, "add")==0) {
-                    Element val = stack_pop(st);
-                    Element val2 = stack_pop(st);
-                    assert(val.type == ELEM_INT && val2.type == ELEM_INT);
-                    stack_push(st, element_int(val.u.ival + val2.u.ival));
-                } else if (strcmp(out_token.u.name, "def")==0) {
+                if (strcmp(out_token.u.name, "def")==0) {
                     Element value = stack_pop(st); //5
                     Element name = stack_pop(st); //x
                     assert(name.type == ELEM_LITERAL_NAME);
                     assert(value.type == ELEM_INT);
-                    dict_put(dict, name.u.name, value.u.ival);
+                    dict_put(dict, name.u.name, value);
                 } else {
-                    int out_value;
+                    Element elem;
 
-                    if (dict_get(dict, out_token.u.name, &out_value)) {
-                        stack_push(st, element_int(out_value));
+                    if (dict_get(dict, out_token.u.name, &elem)) {
+                        if (elem.type == ELEM_PRIMITIVE) {
+                            elem.u.fn(st);
+                        } else {
+                            stack_push(st, elem);
+                        }
                     } else {
                         fprintf(stderr, "unknown word: %s\n", out_token.u.name);
                     }

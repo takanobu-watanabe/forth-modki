@@ -19,3 +19,11 @@ Element element_literal_name(const char *name) {
     strcpy(e.u.name, name);
     return e;
 }
+
+Element element_primitive(PrimitiveFn fn) {
+    Element e;
+
+    e.type = ELEM_PRIMITIVE;
+    e.u.fn = fn;
+    return e;
+}

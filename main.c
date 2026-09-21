@@ -3,12 +3,15 @@
 #include "parser.h"
 #include "stack.h"
 #include "eval.h"
+#include "primitives.h"
 
 int main(int argc, char **argv) {
     FILE *fp;
     CharSource src;
     Stack *st;
     Dict *dict = dict_new();
+
+    register_primitives(dict);
 
     if (argc < 2) {
         fprintf(stderr, "usage: %s <file.ps>\n", argv[0]);

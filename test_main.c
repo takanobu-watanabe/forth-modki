@@ -5,6 +5,7 @@
 #include "stack.h"
 #include "eval.h"
 #include "dict.h"
+#include "primitives.h"
 
 // Element が ELEM_INT で、期待した値を持つことを検証する
 #define UT_EQ_ELEM_INT(expected, actual) do { \
@@ -294,6 +295,7 @@ void test_eval_add(void) {
     Stack *st = stack_new(10);
     Dict *dict = dict_new();
 
+    register_primitives(dict);
     eval(&src, st, dict);
     UT_EQ_INT(1, stack_size(st)); 
     UT_EQ_ELEM_INT(3, stack_pop(st));
@@ -306,6 +308,7 @@ void test_eval_add_twice(void) {
     Stack *st = stack_new(10);
     Dict *dict = dict_new();
 
+    register_primitives(dict);
     eval(&src, st, dict);
     UT_EQ_INT(1, stack_size(st)); 
     UT_EQ_ELEM_INT(13, stack_pop(st));
@@ -314,15 +317,15 @@ void test_eval_add_twice(void) {
 
 void test_dict_put_get(void) {
     Dict *dict = dict_new();
-    int val;
+    Element val;
     bool found;
 
-    dict_put(dict, "x", 5);
+    dict_put(dict, "x", element_int(5));
 
     found = dict_get(dict, "x", &val);
     UT_TRUE(found);
     if (found) {
-        UT_EQ_INT(5, val);
+        UT_EQ_ELEM_INT(5, val);
     }
 
     dict_free(dict);
@@ -330,16 +333,16 @@ void test_dict_put_get(void) {
 
 void test_dict_put_overwrites(void) {
     Dict *dict = dict_new();
-    int val;
+    Element val;
     bool found;
 
-    dict_put(dict, "x", 5);
-    dict_put(dict, "x", 10);
+    dict_put(dict, "x", element_int(5));
+    dict_put(dict, "x", element_int(10));
 
     found = dict_get(dict, "x", &val);
     UT_TRUE(found);
     if (found) {
-        UT_EQ_INT(10, val);
+        UT_EQ_ELEM_INT(10, val);
     }
 
     dict_free(dict);
@@ -347,7 +350,7 @@ void test_dict_put_overwrites(void) {
 
 void test_dict_get_undefined_returns_false(void) {
     Dict *dict = dict_new();
-    int val;
+    Element val;
     bool found;
 
     found = dict_get(dict, "y", &val);
@@ -361,6 +364,7 @@ void test_eval_def_and_use(void) {
     Stack *st = stack_new(10);
     Dict *dict = dict_new();
 
+    register_primitives(dict);
     eval(&src, st, dict);
     UT_EQ_INT(1, stack_size(st)); 
     UT_EQ_ELEM_INT(10, stack_pop(st));
@@ -376,17 +380,18 @@ void test_dict_many_entries(void) {
     int count = sizeof(values) / sizeof(values[0]);
 
     for (int i = 0; i < count; i++) {
-        dict_put(dict, values[i], i);
+        dict_put(dict, values[i], element_int(i));
     }
-    for (int i = 0; i < count; i++) { 
-        int out_value;
+    for (int i = 0; i < count; i++) {
+        Element out_value;
 
         bool found = dict_get(dict, values[i], &out_value);
         UT_TRUE(found);
         if (found) {
-            UT_EQ_INT(i, out_value);
+            UT_EQ_ELEM_INT(i, out_value);
         }
     }
+    dict_free(dict);
 }
 
 

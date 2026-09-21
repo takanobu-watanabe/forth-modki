@@ -369,6 +369,27 @@ void test_eval_def_and_use(void) {
     dict_free(dict);
 }
 
+void test_dict_many_entries(void) {
+    Dict *dict = dict_new();
+
+    const char *values[] = {"add", "sub", "mul", "div", "x", "y", "z", "foo", "bar", "baz", "hello", "world"};
+    int count = sizeof(values) / sizeof(values[0]);
+
+    for (int i = 0; i < count; i++) {
+        dict_put(dict, values[i], i);
+    }
+    for (int i = 0; i < count; i++) { 
+        int out_value;
+
+        bool found = dict_get(dict, values[i], &out_value);
+        UT_TRUE(found);
+        if (found) {
+            UT_EQ_INT(i, out_value);
+        }
+    }
+}
+
+
 
 int main(void) {
     test_parse_int_single();
@@ -395,6 +416,7 @@ int main(void) {
     test_dict_put_overwrites();
     test_dict_get_undefined_returns_false();
     test_eval_def_and_use();
+    test_dict_many_entries();
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

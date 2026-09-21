@@ -232,36 +232,6 @@ void test_stack_top_does_not_pop(void) {
     stack_free(st);
 }
 
-void test_stack_dup(void) {
-    Stack *st = stack_new(10);
-
-    stack_push(st, element_int(5));
-    stack_dup(st);
-    UT_EQ_INT(2, stack_size(st));  
-    UT_EQ_ELEM_INT(5, stack_pop(st));
-    UT_EQ_ELEM_INT(5, stack_pop(st));
-    UT_TRUE(stack_is_empty(st));
-  
-    
-    stack_free(st);
-}
-
-void test_stack_dup_keeps_lower(void) {
-    Stack *st = stack_new(10);
-
-    stack_push(st, element_int(1));
-    stack_push(st, element_int(2));
-    stack_dup(st);
-
-    UT_EQ_INT(3, stack_size(st));
-    
-    UT_EQ_ELEM_INT(2, stack_pop(st));
-    UT_EQ_ELEM_INT(2, stack_pop(st));
-    UT_EQ_ELEM_INT(1, stack_pop(st));
-
-    stack_free(st);
-}
-
 void test_stack_exch(void) {
     Stack *st = stack_new(10);
 
@@ -299,6 +269,32 @@ void test_eval_add(void) {
     eval(&src, st, dict);
     UT_EQ_INT(1, stack_size(st)); 
     UT_EQ_ELEM_INT(3, stack_pop(st));
+    stack_free(st);
+    dict_free(dict);
+}
+
+void test_eval_dup(void) {
+    CharSource src = make_src_from_string("5 dup add");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    
+    register_primitives(dict);
+    eval(&src, st, dict);
+    UT_EQ_INT(1, stack_size(st)); 
+    UT_EQ_ELEM_INT(10, stack_pop(st));
+    stack_free(st);
+    dict_free(dict);
+}
+
+void test_eval_pop(void) {
+    CharSource src = make_src_from_string("1 2 pop");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    
+    register_primitives(dict);
+    eval(&src, st, dict);
+    UT_EQ_INT(1, stack_size(st)); 
+    UT_EQ_ELEM_INT(1, stack_pop(st));
     stack_free(st);
     dict_free(dict);
 }
@@ -461,8 +457,8 @@ int main(void) {
     test_parse_one_close_brace();
     test_stack_push_pop();
     test_stack_top_does_not_pop();
-    test_stack_dup();
-    test_stack_dup_keeps_lower();
+    test_eval_dup();
+    test_eval_pop();
     test_stack_exch();
     test_eval_push_only();
     test_eval_add();

@@ -37,6 +37,13 @@ void prim_div(Stack *st) {
     stack_push(st, element_int(a.u.ival / b.u.ival));
 }
 
+void prim_dup(Stack *st) {
+    stack_dup(st);
+}
+
+void prim_pop(Stack *st) {
+    stack_pop(st);
+}
 
 void register_primitives(Dict *dict) {
     // ここで dict_put(dict, "add", element_primitive(prim_add)); のように登録する
@@ -44,5 +51,6 @@ void register_primitives(Dict *dict) {
     dict_put(dict, "sub", element_primitive(prim_sub));
     dict_put(dict, "mul", element_primitive(prim_mul));
     dict_put(dict, "div", element_primitive(prim_div));
-
+    dict_put(dict, "dup", element_primitive(prim_dup));
+    dict_put(dict, "pop", element_primitive(prim_pop));
 }

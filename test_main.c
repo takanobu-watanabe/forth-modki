@@ -141,6 +141,60 @@ void test_parse_one_int(void){
     fclose(src.fp);
 }
 
+void test_parse_one_exec_name(void) {
+    CharSource src = make_src_from_string("add");
+    Token t = { .type = TOKEN_EOF };
+
+    bool b = parse_one(&src, &t);
+    UT_TRUE(b);
+    if (b){
+        UT_EQ_INT(TOKEN_EXEC_NAME, t.type);
+        if (t.type == TOKEN_EXEC_NAME) {
+            UT_EQ_INT(0, strcmp("add", t.u.name));
+        }
+    }
+    fclose(src.fp);
+}
+
+void test_parse_one_literal_name(void) {
+    CharSource src = make_src_from_string("/double");
+    Token t = { .type = TOKEN_EOF };
+
+    bool b = parse_one(&src, &t);
+    UT_TRUE(b);
+    if (b){
+        UT_EQ_INT(TOKEN_LITERAL_NAME, t.type);
+        if (t.type == TOKEN_LITERAL_NAME) {
+            UT_EQ_INT(0, strcmp("double", t.u.name));
+        }
+    }
+    fclose(src.fp);
+}
+
+void test_parse_one_open_brace(void) {
+    CharSource src = make_src_from_string("{");
+    Token t = { .type = TOKEN_EOF };
+
+    bool b = parse_one(&src, &t);
+    UT_TRUE(b);
+    if (b){
+        UT_EQ_INT(TOKEN_OPEN_BRACE, t.type);
+    }
+    fclose(src.fp);
+}
+
+void test_parse_one_close_brace(void) {
+    CharSource src = make_src_from_string("}");
+    Token t = { .type = TOKEN_EOF };
+
+    bool b = parse_one(&src, &t);
+    UT_TRUE(b);
+    if (b){
+        UT_EQ_INT(TOKEN_CLOSE_BRACE, t.type);
+    }
+    fclose(src.fp);
+}
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -150,6 +204,10 @@ int main(void) {
     test_parse_int_max();
     test_parse_int_overflow();
     test_parse_one_int();
+    test_parse_one_exec_name();
+    test_parse_one_literal_name();
+    test_parse_one_open_brace();
+    test_parse_one_close_brace();
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

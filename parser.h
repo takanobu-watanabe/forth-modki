@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <limits.h>
+
+#define NAME_MAX_SIZE 64
 
 typedef struct {
     FILE *fp;
@@ -20,7 +23,7 @@ typedef struct {
     TokenType type;
     union {
         int ival;
-        char name[64];
+        char name[NAME_MAX_SIZE];
     } u;
 } Token;
 

@@ -17,6 +17,10 @@ static bool is_number(int c) {
     return (c >= '0' && c <= '9');
 }
 
+static bool is_brace(int c) {
+    return c == '{' || c == '}';
+}
+
 bool parse_int(CharSource *src, int *out) {
     // fgetc の戻り値は、文字だけでなく EOF も区別できる int で受け取る。
     int c;
@@ -61,15 +65,79 @@ bool parse_int(CharSource *src, int *out) {
     }
 }
 
+static bool is_literal(int c) {
+    if (c == '/')  {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+static bool is_name(int c) {
+    if (c >= 'a' && c <= 'z') {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 bool parse_one(CharSource *src, Token *out_token) {
     bool b;
+    int c; 
     int num;
+    bool is_literal_name = false;
 
-    b = parse_int(src, &num);
-    if (b) {
-        out_token->type = TOKEN_INT;
-        out_token->u.ival = num;
+    while ((c = cl_getc(src)) != EOF && is_space(c)) {
+    }
+
+    if (is_literal(c)) {
+       is_literal_name = true;
+       c = cl_getc(src);
+    }
+    if (is_brace(c)) {
+        if (c == '{') {
+            out_token->type = TOKEN_OPEN_BRACE;
+        } else {
+            out_token->type = TOKEN_CLOSE_BRACE;
+        }
         return true;
+    }
+    else if (is_number(c)) {
+        cl_ungetc(src, c);
+        b = parse_int(src, &num);
+        if (b) {
+            out_token->type = TOKEN_INT;
+            out_token->u.ival = num;
+        } else {
+            return false;
+        }
+        return true;
+    }
+    else if (is_name(c)) {
+        char s[NAME_MAX_SIZE];
+        int i = 0;
+
+        while(!is_space(c) && !is_brace(c) && c!=EOF) {
+            if (i==NAME_MAX_SIZE-1) {
+                break;
+            }
+            s[i] = c;
+            i++;
+            c = cl_getc(src); 
+        }
+        s[i] = '\0';
+        cl_ungetc(src, c);
+        if (is_literal_name) {
+            out_token->type = TOKEN_LITERAL_NAME;
+        } else {
+            out_token->type = TOKEN_EXEC_NAME;
+        }
+        strcpy(out_token->u.name, s);
+        return true;
+    }
+    else if (c == EOF) {
+        out_token->type = TOKEN_EOF;
+        return false;
     }
     return false;
 }

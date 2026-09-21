@@ -11,10 +11,38 @@ void prim_add(Stack *st) {
     assert(b.type == ELEM_INT);
     assert(a.type == ELEM_INT);
     stack_push(st, element_int(a.u.ival + b.u.ival));
-
 }
+
+void prim_sub(Stack *st) {
+    Element b = stack_pop(st);
+    Element a = stack_pop(st);
+    assert(b.type == ELEM_INT);
+    assert(a.type == ELEM_INT);
+    stack_push(st, element_int(a.u.ival - b.u.ival));
+}
+
+void prim_mul(Stack *st) {
+    Element b = stack_pop(st);
+    Element a = stack_pop(st);
+    assert(b.type == ELEM_INT);
+    assert(a.type == ELEM_INT);
+    stack_push(st, element_int(a.u.ival * b.u.ival));
+}
+
+void prim_div(Stack *st) {
+    Element b = stack_pop(st);
+    Element a = stack_pop(st);
+    assert(b.type == ELEM_INT);
+    assert(a.type == ELEM_INT);
+    stack_push(st, element_int(a.u.ival / b.u.ival));
+}
+
 
 void register_primitives(Dict *dict) {
     // ここで dict_put(dict, "add", element_primitive(prim_add)); のように登録する
     dict_put(dict, "add", element_primitive(prim_add));
+    dict_put(dict, "sub", element_primitive(prim_sub));
+    dict_put(dict, "mul", element_primitive(prim_mul));
+    dict_put(dict, "div", element_primitive(prim_div));
+
 }

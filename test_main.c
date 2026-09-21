@@ -303,6 +303,56 @@ void test_eval_add(void) {
     dict_free(dict);
 }
 
+void test_eval_sub(void) {
+    CharSource src = make_src_from_string("10 3 sub");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    register_primitives(dict);
+
+    eval(&src, st, dict);
+    UT_EQ_ELEM_INT(7, stack_pop(st));
+
+    stack_free(st);
+    dict_free(dict);
+}
+
+void test_eval_mul(void) {
+    CharSource src = make_src_from_string("10 3 mul");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    register_primitives(dict);
+
+    eval(&src, st, dict);
+    UT_EQ_ELEM_INT(30, stack_pop(st));
+    stack_free(st);
+    dict_free(dict);
+}
+
+void test_eval_div(void) {
+    CharSource src = make_src_from_string("10 2 div");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    register_primitives(dict);
+
+    eval(&src, st, dict);
+    UT_EQ_ELEM_INT(5, stack_pop(st));
+    stack_free(st);
+    dict_free(dict);
+}
+
+void test_eval_sub_reversed(void) {
+    CharSource src = make_src_from_string("3 10 sub");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    register_primitives(dict);
+
+    eval(&src, st, dict);
+    UT_EQ_ELEM_INT(-7, stack_pop(st));
+    stack_free(st);
+    dict_free(dict);
+}
+
+
 void test_eval_add_twice(void) {
     CharSource src = make_src_from_string("1 2 add 10 add");
     Stack *st = stack_new(10);
@@ -416,6 +466,10 @@ int main(void) {
     test_stack_exch();
     test_eval_push_only();
     test_eval_add();
+    test_eval_sub();
+    test_eval_mul();
+    test_eval_div();
+    test_eval_sub_reversed();
     test_eval_add_twice();
     test_dict_put_get();
     test_dict_put_overwrites();

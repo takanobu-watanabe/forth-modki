@@ -61,3 +61,9 @@ int stack_size(Stack *stack) {
     return stack->top;
 }
 
+void stack_dup(Stack *stack) {
+    int top_val;
+
+    top_val = stack_top(stack);
+    stack_push(stack, top_val);
+}

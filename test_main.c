@@ -222,10 +222,38 @@ void test_stack_top_does_not_pop(void) {
     UT_EQ_INT(5, stack_top(st));
     UT_EQ_INT(1, stack_size(st));
     stack_free(st);
-
 }
 
+void test_stack_dup(void) {
+    Stack *st = stack_new(10);
 
+    stack_push(st, 5);
+    stack_dup(st);
+    UT_EQ_INT(2, stack_size(st));  
+    UT_EQ_INT(5, stack_pop(st));
+    UT_EQ_INT(5, stack_pop(st));
+    UT_TRUE(stack_is_empty(st));
+  
+    
+    stack_free(st);
+}
+
+void test_stack_dup_keeps_lower(void) {
+    Stack *st = stack_new(10);
+
+    stack_push(st, 1);
+    stack_push(st, 2);
+    stack_dup(st);
+
+    // ここに検証を書く: size が 3、pop が 2 → 2 → 1 の順
+    UT_EQ_INT(3, stack_size(st));
+    
+    UT_EQ_INT(2, stack_pop(st));
+    UT_EQ_INT(2, stack_pop(st));
+    UT_EQ_INT(1, stack_pop(st));
+
+    stack_free(st);
+}
 
 int main(void) {
     test_parse_int_single();
@@ -242,12 +270,13 @@ int main(void) {
     test_parse_one_close_brace();
     test_stack_push_pop();
     test_stack_top_does_not_pop();
+    test_stack_dup();
+    test_stack_dup_keeps_lower();
 
     printf("--- parser_print_all ---\n");
     CharSource src = make_src_from_string("/x 5 def x");
     parser_print_all(&src);
     fclose(src.fp);
-    test_stack_push_pop();
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

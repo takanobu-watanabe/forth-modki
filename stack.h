@@ -12,5 +12,6 @@ int stack_pop(Stack *stack);
 int stack_top(Stack *stack);
 bool stack_is_empty(Stack *stack);
 int stack_size(Stack *stack);
+void stack_dup(Stack *stack);
 
 #endif

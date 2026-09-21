@@ -6,6 +6,7 @@
 #include "eval.h"
 #include "dict.h"
 #include "primitives.h"
+#include "exec_array.h"
 
 // Element が ELEM_INT で、期待した値を持つことを検証する
 #define UT_EQ_ELEM_INT(expected, actual) do { \

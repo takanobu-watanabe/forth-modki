@@ -12,9 +12,6 @@ int main(int argc, char **argv) {
     Stack *st;
     Dict *dict = dict_new();
 
-    // 演習8-1: items[] の分がサイズに含まれていないことの目視確認
-    printf("sizeof(ExecArray) = %zu\n", sizeof(ExecArray));
-
     register_primitives(dict);
 
     if (argc < 2) {
@@ -29,12 +26,31 @@ int main(int argc, char **argv) {
     src.fp = fp;
     st = stack_new(100);
     eval(&src, st, dict);
-    {
+
+    // 空のプログラム（あるいは値を残さないプログラム）を渡されたときに
+    // 空スタックを pop しないようにする
+    if (stack_is_empty(st)) {
+        printf("result: (スタックは空)\n");
+    } else {
         Element result = stack_pop(st);
-        if (result.type == ELEM_INT) {
+
+        switch (result.type) {
+        case ELEM_INT:
             printf("result: %d\n", result.u.ival);
-        } else {
+            break;
+        case ELEM_LITERAL_NAME:
             printf("result: /%s\n", result.u.name);
+            break;
+        case ELEM_EXEC_NAME:
+            printf("result: %s\n", result.u.name);
+            break;
+        case ELEM_EXEC_ARRAY:
+            printf("result: { ... }（%d要素の実行可能配列）\n",
+                   result.u.exec_array->count);
+            break;
+        case ELEM_PRIMITIVE:
+            printf("result: <組み込み関数>\n");
+            break;
         }
     }
     fclose(fp); 

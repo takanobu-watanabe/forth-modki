@@ -621,6 +621,76 @@ void test_eval_exch(void) {
 }
 
 
+// --- if / ifelse -------------------------------------------------------
+
+void test_eval_if_true(void) {
+    check_eval_int("1 { 42 } if", 42);
+}
+
+// 偽のときは何も積まれないので、トップを見る check_eval_int は使えない。
+// 下に積んでおいた 99 がそのまま残っていることで「何もしなかった」を確認する。
+void test_eval_if_false(void) {
+    CharSource src = make_src_from_string("99 0 { 42 } if");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+
+    register_primitives(dict);
+    eval(&src, st, dict);
+
+    UT_EQ_INT(1, stack_size(st));      // if は bool と proc の2つだけを消費する
+    UT_EQ_ELEM_INT(99, stack_pop(st));
+
+    stack_free(st);
+    dict_free(dict);
+    fclose(src.fp);
+}
+
+// 実行されるブロックは、その下に積まれている値を使える
+// （{ 2 mul } の中に 5 は書かれていないが、呼ぶ前に積んだ 5 が掛けられる）
+void test_eval_if_uses_stack_below(void) {
+    check_eval_int("5 1 { 2 mul } if", 10);
+}
+
+// ifelse は真偽の両方を確認しないと、条件を逆に実装していても気づけない
+void test_eval_ifelse_true(void) {
+    check_eval_int("1 { 10 } { 20 } ifelse", 10);
+}
+
+void test_eval_ifelse_false(void) {
+    check_eval_int("0 { 10 } { 20 } ifelse", 20);
+}
+
+// パーサー単体：-5 が TOKEN_INT として読めるか
+void test_parse_one_negative_int(void) {
+    CharSource src = make_src_from_string("-5");
+    Token t = { .type = TOKEN_EOF };
+
+    bool b = parse_one(&src, &t);
+    UT_TRUE(b);
+    if (b) {
+        UT_EQ_INT(TOKEN_INT, t.type);
+        if (t.type == TOKEN_INT) {
+            UT_EQ_INT(-5, t.u.ival);
+        }
+    }
+    fclose(src.fp);
+}
+
+// eval 層：負のリテラルがそのまま値として扱えるか
+void test_eval_negative_literal(void) {
+    check_eval_int("-5", -5);
+    check_eval_int("-3 -4 add", -7);
+    check_eval_int("10 -3 sub", 13);
+}
+
+// 演習9-4: 絶対値。if が真・偽の両方で正しく働くことを実際のプログラムで確認する
+void test_eval_abs(void) {
+    check_eval_int("-5 dup 0 lt { -1 mul } if", 5);   // 負 → 符号反転する
+    check_eval_int("5 dup 0 lt { -1 mul } if", 5);    // 正 → 何もしない
+    check_eval_int("0 dup 0 lt { -1 mul } if", 0);    // 0 は負ではないので何もしない
+}
+
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -663,6 +733,14 @@ int main(void) {
     test_eval_le();
     test_eval_ge();
     test_eval_exch();
+    test_eval_if_true();
+    test_eval_if_false();
+    test_eval_if_uses_stack_below();
+    test_eval_ifelse_true();
+    test_eval_ifelse_false();
+    test_parse_one_negative_int();
+    test_eval_negative_literal();
+    test_eval_abs();
     
 
     if (g_test_fail_count == 0) {

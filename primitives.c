@@ -3,6 +3,7 @@
 #include "stack.h"
 #include "element.h"
 #include <assert.h>
+#include "eval.h"
 
 void prim_add(Stack *st, Dict *dict) {
     (void)dict;
@@ -109,6 +110,38 @@ void prim_exch(Stack *st, Dict *dict) {
     stack_exch(st);
 }
 
+void prim_if(Stack *st, Dict *dict) {
+    Element proc = stack_pop(st);
+    Element cond = stack_pop(st);
+
+    assert(proc.type == ELEM_EXEC_ARRAY);
+    assert(cond.type == ELEM_INT);
+
+    if (cond.u.ival) {
+        eval_exec_array(proc.u.exec_array, st, dict);
+    }
+}
+
+//"1 { 10 } { 20 } ifelse
+void prim_ifelse(Stack *st, Dict *dict) {
+    Element proc2 = stack_pop(st);   // 偽のとき用（後に積まれたので先に出る）
+    Element proc1 = stack_pop(st);   // 真のとき用
+    Element cond  = stack_pop(st);
+
+    assert(proc2.type == ELEM_EXEC_ARRAY);
+    assert(proc1.type == ELEM_EXEC_ARRAY);
+    assert(cond.type == ELEM_INT);
+    // 3つとも型を assert
+
+    if (cond.u.ival == 1) {
+        eval_exec_array(proc1.u.exec_array, st, dict);
+    } else {
+        eval_exec_array(proc2.u.exec_array, st, dict);
+    }
+    // cond が真なら proc1、偽なら proc2 を eval_exec_array で実行
+}
+
+
 void register_primitives(Dict *dict) {
     dict_put(dict, "add", element_primitive(prim_add));
     dict_put(dict, "sub", element_primitive(prim_sub));
@@ -123,4 +156,7 @@ void register_primitives(Dict *dict) {
     dict_put(dict, "le", element_primitive(prim_le));
     dict_put(dict, "ge", element_primitive(prim_ge));
     dict_put(dict, "exch", element_primitive(prim_exch));
+    dict_put(dict, "if", element_primitive(prim_if));
+    dict_put(dict, "ifelse", element_primitive(prim_ifelse));
+
 }

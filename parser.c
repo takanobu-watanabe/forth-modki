@@ -38,7 +38,6 @@ bool parse_int(CharSource *src, int *out) {
                 continue;
             }
         }
-
         if (is_number(c)) {
             // 文字 '0'〜'9' を数値 0〜9 に変換する。
             int digit = c - '0';
@@ -102,6 +101,23 @@ bool parse_one(CharSource *src, Token *out_token) {
         }
         return true;
     }
+    else if (c == '-') {
+        int next = cl_getc(src);
+
+        if (is_number(next)) {
+            cl_ungetc(src, next);
+            b = parse_int(src, &num);
+            if (b) {
+                out_token->type = TOKEN_INT;
+                out_token->u.ival = -num;      // ここで符号を反転
+                return true;
+            }
+            return false;
+        }
+        // 数字が続かない場合（「- 」や「-abc」）は今回は扱わない
+        cl_ungetc(src, next);
+        return false;
+    }
     else if (is_number(c)) {
         cl_ungetc(src, c);
         b = parse_int(src, &num);
@@ -139,6 +155,7 @@ bool parse_one(CharSource *src, Token *out_token) {
         out_token->type = TOKEN_EOF;
         return false;
     }
+    fprintf(stderr, "unexpected character: '%c'\n", c);
     return false;
 }
 

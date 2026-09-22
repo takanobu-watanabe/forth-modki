@@ -496,6 +496,33 @@ void test_eval_exec_array_def_and_call(void) {
     fclose(src.fp);
 }
 
+void test_compile_nested(void) {
+    CharSource src = make_src_from_string("1 { 2 3 add } }");
+    ExecArray *ea = compile_exec_array(&src);
+
+    UT_EQ_INT(2, ea->count);
+    UT_EQ_ELEM_INT(1, ea->items[0]);
+
+    UT_EQ_INT(ELEM_EXEC_ARRAY, ea->items[1].type);
+    if (ea->items[1].type == ELEM_EXEC_ARRAY) {
+        ExecArray *inner = ea->items[1].u.exec_array;
+        UT_EQ_INT(3, inner->count);
+
+        UT_EQ_ELEM_INT(2, inner->items[0]);
+        UT_EQ_ELEM_INT(3, inner->items[1]);
+
+        // 内側でも add は辞書引きされず、名前のまま保持されている
+        UT_EQ_INT(ELEM_EXEC_NAME, inner->items[2].type);
+        if (inner->items[2].type == ELEM_EXEC_NAME) {
+            UT_EQ_INT(0, strcmp("add", inner->items[2].u.name));
+        }
+    }
+
+    exec_array_free(ea);
+    fclose(src.fp);
+}
+
+
 
 
 int main(void) {
@@ -531,6 +558,7 @@ int main(void) {
     test_exec_array_new();
     test_compile_simple();
     test_eval_exec_array_def_and_call();
+    test_compile_nested();
     
 
     if (g_test_fail_count == 0) {

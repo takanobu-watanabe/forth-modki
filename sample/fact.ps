@@ -1,0 +1,8 @@
+/fact {
+  dup 1 le
+    { pop 1 }
+    { dup 1 sub fact mul }
+  ifelse
+} def
+
+5 fact

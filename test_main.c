@@ -350,6 +350,63 @@ void test_eval_sub_reversed(void) {
 }
 
 
+// コードを評価して、スタックのトップが期待値かを確認する。
+// 比較演算子のように「入力を変えて同じ形を繰り返す」テスト用。
+// 失敗したときはどの入力で落ちたかも表示する。
+static void check_eval_int(const char *code, int expected) {
+    int fail_before = g_test_fail_count;
+    CharSource src = make_src_from_string(code);
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+
+    register_primitives(dict);
+    eval(&src, st, dict);
+    UT_EQ_ELEM_INT(expected, stack_pop(st));
+
+    if (g_test_fail_count != fail_before) {
+        printf("    ↑ 入力: \"%s\"\n", code);
+    }
+
+    stack_free(st);
+    dict_free(dict);
+    fclose(src.fp);
+}
+
+void test_eval_eq(void) {
+    check_eval_int("3 3 eq", 1);
+    check_eval_int("3 4 eq", 0);
+}
+
+void test_eval_ne(void) {
+    check_eval_int("3 4 ne", 1);
+    check_eval_int("3 3 ne", 0);
+}
+
+// lt / gt は境界（等しいとき偽）まで見ると le / ge との違いが固定できる
+void test_eval_lt(void) {
+    check_eval_int("1 2 lt", 1);
+    check_eval_int("2 1 lt", 0);   // 引数の順序を取り違えていないか
+    check_eval_int("2 2 lt", 0);   // 等しいときは偽
+}
+
+void test_eval_gt(void) {
+    check_eval_int("2 1 gt", 1);
+    check_eval_int("1 2 gt", 0);
+    check_eval_int("2 2 gt", 0);
+}
+
+void test_eval_le(void) {
+    check_eval_int("1 2 le", 1);
+    check_eval_int("2 2 le", 1);   // 等しいときは真。ここが lt との違い
+    check_eval_int("3 2 le", 0);
+}
+
+void test_eval_ge(void) {
+    check_eval_int("2 1 ge", 1);
+    check_eval_int("2 2 ge", 1);   // 等しいときは真。ここが gt との違い
+    check_eval_int("1 2 ge", 0);
+}
+
 void test_eval_add_twice(void) {
     CharSource src = make_src_from_string("1 2 add 10 add");
     Stack *st = stack_new(10);
@@ -581,6 +638,12 @@ int main(void) {
     test_eval_exec_array_def_and_call();
     test_compile_nested();
     test_compile_grows_beyond_capacity();
+    test_eval_eq();
+    test_eval_ne();
+    test_eval_lt();
+    test_eval_gt();
+    test_eval_le();
+    test_eval_ge();
     
 
     if (g_test_fail_count == 0) {

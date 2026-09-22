@@ -3,10 +3,12 @@
 
 #define ELEMENT_NAME_MAX_SIZE 64
 
-// 前方宣言。Stack* を受け取り void を返す関数へのポインタ型。
-// プリミティブ（add など組み込み演算）はスタックを直接操作する。
+// 前方宣言。プリミティブ（add など組み込み演算）が受け取る型。
+// dict が要るのは if / ifelse のため。取り出した実行可能配列を
+// 評価するとき、中の名前を辞書で引く必要がある。
 typedef struct Stack Stack;
-typedef void (*PrimitiveFn)(Stack *st);
+typedef struct Dict Dict;
+typedef void (*PrimitiveFn)(Stack *st, Dict *dict);
 
 // 前方宣言。中身（flexible array member を使った定義）は exec_array.h にある。
 // ここではポインタとしてしか使わないので、不完全型のままでよい。

@@ -114,7 +114,7 @@ static void trace_element(Element e, Stack *st, Dict *dict, int depth) {
             case ELEM_PRIMITIVE:
                 ind(depth);
                 printf("  C関数なので呼ぶ\n");
-                found.u.fn(st);
+                found.u.fn(st, dict);
                 break;
             case ELEM_EXEC_ARRAY:
                 ind(depth);

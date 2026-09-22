@@ -6,7 +6,7 @@
 #include "element.h"
 
 // 中身は dict.c に隠す（使う側は Dict* しか扱えない）
-typedef struct Dict Dict;
+// typedef 自体は element.h で済んでいる（PrimitiveFn が Dict* を取るため）
 
 Dict *dict_new(void);
 void dict_free(Dict *dict);

@@ -14,7 +14,7 @@ void eval_element(Element e, Stack *st, Dict *dict) {
         if (dict_get(dict, e.u.name, &elem)) {
             switch (elem.type) {
                 case ELEM_PRIMITIVE:
-                    elem.u.fn(st);
+                    elem.u.fn(st, dict);
                     break;
                 case ELEM_EXEC_ARRAY:
                     eval_exec_array(elem.u.exec_array, st, dict);
@@ -67,7 +67,7 @@ void eval(CharSource *src, Stack *st, Dict *dict) {
                     if (dict_get(dict, out_token.u.name, &elem)) {
                         switch (elem.type) {
                             case ELEM_PRIMITIVE:
-                                elem.u.fn(st);
+                                elem.u.fn(st, dict);
                                 break;
                             case ELEM_EXEC_ARRAY:
                                 eval_exec_array(elem.u.exec_array, st, dict);

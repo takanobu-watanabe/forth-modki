@@ -16,10 +16,12 @@ void eval(CharSource *src, Stack *st, Dict *dict) {
             case TOKEN_LITERAL_NAME:
                 stack_push(st, element_literal_name(out_token.u.name));
                 break;
+            case TOKEN_OPEN_BRACE:
+                break;
             case TOKEN_EXEC_NAME:
                 if (strcmp(out_token.u.name, "def")==0) {
-                    Element value = stack_pop(st); //5
-                    Element name = stack_pop(st); //x
+                    Element value = stack_pop(st); 
+                    Element name = stack_pop(st); 
                     assert(name.type == ELEM_LITERAL_NAME);
                     assert(value.type == ELEM_INT);
                     dict_put(dict, name.u.name, value);

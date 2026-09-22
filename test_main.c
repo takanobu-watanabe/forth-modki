@@ -457,7 +457,29 @@ void test_exec_array_new(void) {
     exec_array_free(ea);
 }
 
+void test_compile_simple(void) {
+    // { は呼び出し元（eval）が読み終わっている前提なので、入力に { は含めない
+    CharSource src = make_src_from_string("1 2 add }");
 
+    ExecArray *ea = compile_exec_array(&src);
+
+    if (!ea) {
+        return;
+    }
+
+    UT_EQ_INT(3, ea->count);
+
+    UT_EQ_ELEM_INT(1, ea->items[0]);
+    UT_EQ_ELEM_INT(2, ea->items[1]);
+
+    UT_EQ_INT(ELEM_EXEC_NAME, ea->items[2].type);
+    if (ea->items[2].type == ELEM_EXEC_NAME) {
+        UT_EQ_INT(0, strcmp("add", ea->items[2].u.name));
+    }
+
+    exec_array_free(ea);
+    fclose(src.fp);
+}
 
 
 int main(void) {
@@ -491,6 +513,7 @@ int main(void) {
     test_eval_def_and_use();
     test_dict_many_entries();
     test_exec_array_new();
+    test_compile_simple();
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

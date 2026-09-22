@@ -4,3 +4,4 @@ test
 *.dSYM/
 forth_modoki
 sample.ps
+trace

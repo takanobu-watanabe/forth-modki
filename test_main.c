@@ -481,6 +481,22 @@ void test_compile_simple(void) {
     fclose(src.fp);
 }
 
+void test_eval_exec_array_def_and_call(void) {
+    CharSource src = make_src_from_string("/double { 2 mul } def 5 double");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    register_primitives(dict);
+
+    eval(&src, st, dict);
+
+    UT_EQ_ELEM_INT(10, stack_pop(st));
+
+    stack_free(st);
+    dict_free(dict);
+    fclose(src.fp);
+}
+
+
 
 int main(void) {
     test_parse_int_single();
@@ -514,6 +530,8 @@ int main(void) {
     test_dict_many_entries();
     test_exec_array_new();
     test_compile_simple();
+    test_eval_exec_array_def_and_call();
+    
 
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

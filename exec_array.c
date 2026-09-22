@@ -21,6 +21,12 @@ ExecArray* compile_exec_array(CharSource *src) {
     ExecArray *array = exec_array_new(max_size);
     while (parse_one(src, &out_token)) {
         switch (out_token.type) {
+            case TOKEN_OPEN_BRACE:{
+                ExecArray *inner = compile_exec_array(src);
+                array->items[i] = element_exec_array(inner);
+                i++;
+                break;
+            }
             case TOKEN_INT:
                 array->items[i] = element_int(out_token.u.ival);
                 i++;

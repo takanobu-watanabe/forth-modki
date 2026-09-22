@@ -5,3 +5,4 @@ test
 forth_modoki
 sample.ps
 trace
+unittest_asan

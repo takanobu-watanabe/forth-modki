@@ -15,11 +15,17 @@ void exec_array_free(ExecArray *ea) {
 
 ExecArray* compile_exec_array(CharSource *src) {
     Token out_token;
-    int max_size = 256;
+    int capacity = 8;
     int i = 0;
     
-    ExecArray *array = exec_array_new(max_size);
+    ExecArray *array = exec_array_new(capacity);
     while (parse_one(src, &out_token)) {
+        if (i == capacity) {
+            capacity *= 2;
+            ExecArray *tmp = realloc(array, sizeof(ExecArray) + sizeof(Element) * capacity);
+            assert(tmp != NULL);
+            array = tmp;
+        }
         switch (out_token.type) {
             case TOKEN_OPEN_BRACE:{
                 ExecArray *inner = compile_exec_array(src);

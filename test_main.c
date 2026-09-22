@@ -522,8 +522,29 @@ void test_compile_nested(void) {
     fclose(src.fp);
 }
 
+void test_compile_grows_beyond_capacity(void) {
+    char code[256];
+    int n = 20;
+    int pos = 0;
 
+    // "1 2 3 ... 20 }" という文字列を組み立てる
+    for (int i = 1; i <= n; i++) {
+        pos += snprintf(code + pos, sizeof(code) - pos, "%d ", i);
+    }
+    snprintf(code + pos, sizeof(code) - pos, "}");
 
+    CharSource src = make_src_from_string(code);
+    ExecArray *ea = compile_exec_array(&src);
+
+    UT_EQ_INT(n, ea->count);
+
+    for (int i = 0; i < n; i++) {
+        UT_EQ_ELEM_INT(i + 1, ea->items[i]);
+    }
+
+    exec_array_free(ea);
+    fclose(src.fp);
+}
 
 int main(void) {
     test_parse_int_single();
@@ -559,6 +580,7 @@ int main(void) {
     test_compile_simple();
     test_eval_exec_array_def_and_call();
     test_compile_nested();
+    test_compile_grows_beyond_capacity();
     
 
     if (g_test_fail_count == 0) {

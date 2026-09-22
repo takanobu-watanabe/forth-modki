@@ -104,6 +104,11 @@ void prim_ge(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival >= b.u.ival));
 }
 
+void prim_exch(Stack *st, Dict *dict) {
+    (void)dict;
+    stack_exch(st);
+}
+
 void register_primitives(Dict *dict) {
     dict_put(dict, "add", element_primitive(prim_add));
     dict_put(dict, "sub", element_primitive(prim_sub));
@@ -117,4 +122,5 @@ void register_primitives(Dict *dict) {
     dict_put(dict, "gt", element_primitive(prim_gt));
     dict_put(dict, "le", element_primitive(prim_le));
     dict_put(dict, "ge", element_primitive(prim_ge));
+    dict_put(dict, "exch", element_primitive(prim_exch));
 }

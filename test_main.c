@@ -603,6 +603,24 @@ void test_compile_grows_beyond_capacity(void) {
     fclose(src.fp);
 }
 
+void test_eval_exch(void) {
+    CharSource src = make_src_from_string("1 2 exch");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    register_primitives(dict);
+
+    eval(&src, st, dict);
+
+    // pop すると 1 → 2 の順（入れ替わっているので、積んだ順と同じ順で出る）
+    UT_EQ_ELEM_INT(1, stack_pop(st));
+    UT_EQ_ELEM_INT(2, stack_pop(st));
+
+    stack_free(st);
+    dict_free(dict);
+    fclose(src.fp);
+}
+
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -644,6 +662,7 @@ int main(void) {
     test_eval_gt();
     test_eval_le();
     test_eval_ge();
+    test_eval_exch();
     
 
     if (g_test_fail_count == 0) {

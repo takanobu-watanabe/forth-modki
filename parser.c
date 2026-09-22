@@ -86,7 +86,19 @@ bool parse_one(CharSource *src, Token *out_token) {
     int num;
     bool is_literal_name = false;
 
-    while ((c = cl_getc(src)) != EOF && is_space(c)) {
+    // 空白と、% から行末までのコメントを読み飛ばす。
+    // コメントの後にまた空白やコメントが続くことがあるので外側でも繰り返す。
+    for (;;) {
+        while ((c = cl_getc(src)) != EOF && is_space(c)) {
+        }
+        if (c != '%') {
+            break;
+        }
+        while ((c = cl_getc(src)) != EOF && c != '\n') {
+        }
+        if (c == EOF) {
+            break;
+        }
     }
 
     if (is_literal(c)) {

@@ -683,6 +683,46 @@ void test_eval_negative_literal(void) {
     check_eval_int("10 -3 sub", 13);
 }
 
+// n index : てっぺんから n 個下をコピーして積む
+void test_eval_index(void) {
+    check_eval_int("1 2 3 0 index", 3);   // 0 個下＝てっぺん。dup と同じ
+    check_eval_int("1 2 3 1 index", 2);
+    check_eval_int("1 2 3 2 index", 1);
+}
+
+// index は取り除かずにコピーするだけなので、元の3つが残って4つになる
+void test_eval_index_does_not_consume(void) {
+    CharSource src = make_src_from_string("1 2 3 2 index");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+
+    register_primitives(dict);
+    eval(&src, st, dict);
+
+    UT_EQ_INT(4, stack_size(st));
+    UT_EQ_ELEM_INT(1, stack_pop(st));   // コピーされた 1
+    UT_EQ_ELEM_INT(3, stack_pop(st));
+    UT_EQ_ELEM_INT(2, stack_pop(st));
+    UT_EQ_ELEM_INT(1, stack_pop(st));
+
+    stack_free(st);
+    dict_free(dict);
+    fclose(src.fp);
+}
+
+// { 条件 } { 本体 } while
+void test_eval_while(void) {
+    check_eval_int("5 { dup 0 gt } { 1 sub } while", 0);   // 5 から 0 まで減らす
+    check_eval_int("0 { dup 0 gt } { 1 sub } while", 0);   // 最初から偽なら本体は動かない
+}
+
+// % から行末までがコメントとして読み飛ばされる
+void test_parse_comment(void) {
+    check_eval_int("1 2 add % これはコメント\n", 3);
+    check_eval_int("% 先頭がコメント\n1 2 add", 3);
+    check_eval_int("1 % コメント\n2 % コメント\nadd", 3);
+}
+
 // 演習9-4: 絶対値。if が真・偽の両方で正しく働くことを実際のプログラムで確認する
 void test_eval_abs(void) {
     check_eval_int("-5 dup 0 lt { -1 mul } if", 5);   // 負 → 符号反転する
@@ -741,6 +781,10 @@ int main(void) {
     test_parse_one_negative_int();
     test_eval_negative_literal();
     test_eval_abs();
+    test_eval_index();
+    test_eval_index_does_not_consume();
+    test_eval_while();
+    test_parse_comment();
     
 
     if (g_test_fail_count == 0) {

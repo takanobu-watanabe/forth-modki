@@ -141,6 +141,42 @@ void prim_ifelse(Stack *st, Dict *dict) {
     // cond が真なら proc1、偽なら proc2 を eval_exec_array で実行
 }
 
+// n index : てっぺんから n 個下の値をコピーして積む
+//   [ a b c ] 0 index → [ a b c c ]   （dup と同じ）
+//   [ a b c ] 1 index → [ a b c b ]
+// ローカル変数が無いので、スタック上の「位置」で値を指すための道具。
+void prim_index(Stack *st, Dict *dict) {
+    (void)dict;
+    Element n = stack_pop(st);
+
+    assert(n.type == ELEM_INT);
+    stack_push(st, stack_index(st, n.u.ival));
+}
+
+// { 条件 } { 本体 } while
+// 条件を実行して結果を取り出し、真である限り本体を繰り返す。
+// if が「1回だけ実行するか決める」のに対し、while は毎回決める。
+void prim_while(Stack *st, Dict *dict) {
+    Element body = stack_pop(st);
+    Element cond = stack_pop(st);
+
+    assert(body.type == ELEM_EXEC_ARRAY);
+    assert(cond.type == ELEM_EXEC_ARRAY);
+
+    for (;;) {
+        Element result;
+
+        eval_exec_array(cond.u.exec_array, st, dict);
+        result = stack_pop(st);
+        assert(result.type == ELEM_INT);
+
+        if (!result.u.ival) {
+            break;
+        }
+        eval_exec_array(body.u.exec_array, st, dict);
+    }
+}
+
 
 void register_primitives(Dict *dict) {
     dict_put(dict, "add", element_primitive(prim_add));
@@ -158,5 +194,6 @@ void register_primitives(Dict *dict) {
     dict_put(dict, "exch", element_primitive(prim_exch));
     dict_put(dict, "if", element_primitive(prim_if));
     dict_put(dict, "ifelse", element_primitive(prim_ifelse));
-
+    dict_put(dict, "index", element_primitive(prim_index));
+    dict_put(dict, "while", element_primitive(prim_while));
 }

@@ -40,6 +40,12 @@ Element stack_top(Stack *stack) {
     return stack->data[stack->top-1];
 }
 
+Element stack_index(Stack *stack, int n) {
+    assert(n >= 0);
+    assert(n < stack->top);        // n 個下が存在すること
+    return stack->data[stack->top - 1 - n];
+}
+
 Element stack_pop(Stack *stack) {
     Element val;
 

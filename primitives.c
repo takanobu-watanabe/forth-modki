@@ -41,6 +41,15 @@ void prim_div(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival / b.u.ival));
 }
 
+void prim_mod(Stack *st, Dict *dict) {
+    (void)dict;
+    Element b = stack_pop(st);
+    Element a = stack_pop(st);
+    assert(b.type == ELEM_INT);
+    assert(a.type == ELEM_INT);
+    stack_push(st, element_int(a.u.ival % b.u.ival));
+}
+
 void prim_dup(Stack *st, Dict *dict) {
     (void)dict;
     stack_dup(st);
@@ -141,6 +150,18 @@ void prim_ifelse(Stack *st, Dict *dict) {
     // cond が真なら proc1、偽なら proc2 を eval_exec_array で実行
 }
 
+// /name 値 def : 名前と値を辞書に登録する
+// 05章では eval の中で strcmp による特別扱いだったが、09章で PrimitiveFn が
+// Dict* を受け取れるようになったのでプリミティブにできる。
+// 辞書に入れることで { } の中からも使えるようになる。
+void prim_def(Stack *st, Dict *dict) {
+    Element value = stack_pop(st);
+    Element name = stack_pop(st);
+
+    assert(name.type == ELEM_LITERAL_NAME);
+    dict_put(dict, name.u.name, value);
+}
+
 // n index : てっぺんから n 個下の値をコピーして積む
 //   [ a b c ] 0 index → [ a b c c ]   （dup と同じ）
 //   [ a b c ] 1 index → [ a b c b ]
@@ -177,12 +198,12 @@ void prim_while(Stack *st, Dict *dict) {
     }
 }
 
-
 void register_primitives(Dict *dict) {
     dict_put(dict, "add", element_primitive(prim_add));
     dict_put(dict, "sub", element_primitive(prim_sub));
     dict_put(dict, "mul", element_primitive(prim_mul));
     dict_put(dict, "div", element_primitive(prim_div));
+    dict_put(dict, "mod", element_primitive(prim_mod));
     dict_put(dict, "dup", element_primitive(prim_dup));
     dict_put(dict, "pop", element_primitive(prim_pop));
     dict_put(dict, "eq", element_primitive(prim_eq));
@@ -196,4 +217,5 @@ void register_primitives(Dict *dict) {
     dict_put(dict, "ifelse", element_primitive(prim_ifelse));
     dict_put(dict, "index", element_primitive(prim_index));
     dict_put(dict, "while", element_primitive(prim_while));
+    dict_put(dict, "def", element_primitive(prim_def));
 }

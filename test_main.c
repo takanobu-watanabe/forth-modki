@@ -407,6 +407,12 @@ void test_eval_ge(void) {
     check_eval_int("1 2 ge", 0);
 }
 
+void test_eval_mod(void) {
+    check_eval_int("10 3 mod", 1);
+    check_eval_int("10 5 mod", 0);
+    check_eval_int("3 10 mod", 3);   // 割られる数の方が小さいとき
+}
+
 void test_eval_add_twice(void) {
     CharSource src = make_src_from_string("1 2 add 10 add");
     Stack *st = stack_new(10);
@@ -730,7 +736,6 @@ void test_eval_abs(void) {
     check_eval_int("0 dup 0 lt { -1 mul } if", 0);    // 0 は負ではないので何もしない
 }
 
-
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -754,6 +759,7 @@ int main(void) {
     test_eval_sub();
     test_eval_mul();
     test_eval_div();
+    test_eval_mod();
     test_eval_sub_reversed();
     test_eval_add_twice();
     test_dict_put_get();
@@ -786,7 +792,6 @@ int main(void) {
     test_eval_while();
     test_parse_comment();
     
-
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");
         return 0;

@@ -55,31 +55,9 @@ void eval(CharSource *src, Stack *st, Dict *dict) {
                 break;
             }
             case TOKEN_EXEC_NAME:
-                if (strcmp(out_token.u.name, "def")==0) {
-                    Element value = stack_pop(st); 
-                    Element name = stack_pop(st); 
-                    assert(name.type == ELEM_LITERAL_NAME);
-                    //assert(value.type == ELEM_INT);
-                    dict_put(dict, name.u.name, value);
-                } 
-                else {
-                    Element elem;
-                    if (dict_get(dict, out_token.u.name, &elem)) {
-                        switch (elem.type) {
-                            case ELEM_PRIMITIVE:
-                                elem.u.fn(st, dict);
-                                break;
-                            case ELEM_EXEC_ARRAY:
-                                eval_exec_array(elem.u.exec_array, st, dict);
-                                break;
-                            default:
-                                stack_push(st, elem);
-                                break;
-                        }
-                    } else {
-                        fprintf(stderr, "unknown word: %s\n", out_token.u.name);
-                    }
-                }
+                // 特別扱いは無い。辞書を引いて型で振り分ける処理は
+                // eval_element がそのまま持っているので委ねる。
+                eval_element(element_exec_name(out_token.u.name), st, dict);
                 break;
             default:
                 break;

@@ -186,27 +186,11 @@ static void trace_eval(const char *code, Stack *st, Dict *dict) {
         }
 
         case TOKEN_EXEC_NAME:
+            // def も含めて特別扱いは無い。すべて辞書を引いて振り分ける。
             printf("[%d] トークン: %s  (%s)\n", n, t.u.name, token_type_name(t.type));
-            if (strcmp(t.u.name, "def") == 0) {
-                Element value = stack_pop(st);
-                Element name = stack_pop(st);
-
-                printf("    def は特別扱い。2つ pop する\n");
-                printf("        値   = ");
-                brief(&value);
-                printf("\n        名前 = ");
-                brief(&name);
-                printf("\n");
-                dict_put(dict, name.u.name, value);
-                printf("    辞書に登録: \"%s\" → ", name.u.name);
-                brief(&value);
-                printf("\n");
-            } else {
-                trace_element(element_exec_name(t.u.name), st, dict, 1);
-                printf("\n");
-                continue;
-            }
-            break;
+            trace_element(element_exec_name(t.u.name), st, dict, 1);
+            printf("\n");
+            continue;
 
         default:
             printf("[%d] トークン: (%s) — 無視\n", n, token_type_name(t.type));

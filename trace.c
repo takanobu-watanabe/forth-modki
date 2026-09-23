@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "parser.h"
 #include "stack.h"
@@ -95,6 +96,63 @@ static const char *token_type_name(TokenType t) {
 
 static void trace_exec_array(ExecArray *ea, Stack *st, Dict *dict, int depth);
 
+// if / ifelse / while は中身が実行可能配列なので、C関数をそのまま呼ぶと
+// 内部が見えなくなる。ここだけ trace 側で同じ処理を書き直し、
+// 中身も1ステップずつ追えるようにする。
+// 扱った場合は true を返す（呼び出し側は C関数を呼ばない）。
+static bool trace_control(const char *name, Stack *st, Dict *dict, int depth) {
+    if (strcmp(name, "if") == 0) {
+        Element proc = stack_pop(st);
+        Element cond = stack_pop(st);
+
+        ind(depth);
+        printf("  if: 条件は %s\n", cond.u.ival ? "真 → ブロックを実行" : "偽 → 何もしない");
+        if (cond.u.ival) {
+            trace_exec_array(proc.u.exec_array, st, dict, depth + 2);
+        }
+        return true;
+    }
+
+    if (strcmp(name, "ifelse") == 0) {
+        Element proc2 = stack_pop(st);
+        Element proc1 = stack_pop(st);
+        Element cond  = stack_pop(st);
+
+        ind(depth);
+        printf("  ifelse: 条件は %s\n", cond.u.ival ? "真 → 1つ目のブロック" : "偽 → 2つ目のブロック");
+        trace_exec_array(cond.u.ival ? proc1.u.exec_array : proc2.u.exec_array,
+                         st, dict, depth + 2);
+        return true;
+    }
+
+    if (strcmp(name, "while") == 0) {
+        Element body = stack_pop(st);
+        Element cond = stack_pop(st);
+        int round = 1;
+
+        for (;;) {
+            Element result;
+
+            ind(depth);
+            printf("  while [%d周目] 条件を評価\n", round);
+            trace_exec_array(cond.u.exec_array, st, dict, depth + 2);
+            result = stack_pop(st);
+
+            ind(depth);
+            printf("  while [%d周目] 条件は %s\n", round,
+                   result.u.ival ? "真 → 本体を実行" : "偽 → ループ終了");
+            if (!result.u.ival) {
+                break;
+            }
+            trace_exec_array(body.u.exec_array, st, dict, depth + 2);
+            round++;
+        }
+        return true;
+    }
+
+    return false;
+}
+
 // eval_element と同じことを、途中経過を出しながらやる
 static void trace_element(Element e, Stack *st, Dict *dict, int depth) {
     ind(depth);
@@ -112,9 +170,12 @@ static void trace_element(Element e, Stack *st, Dict *dict, int depth) {
             printf("\n");
             switch (found.type) {
             case ELEM_PRIMITIVE:
-                ind(depth);
-                printf("  C関数なので呼ぶ\n");
-                found.u.fn(st, dict);
+                // 制御構造だけは中身も追う。それ以外は C関数を呼ぶだけ。
+                if (!trace_control(e.u.name, st, dict, depth)) {
+                    ind(depth);
+                    printf("  C関数なので呼ぶ\n");
+                    found.u.fn(st, dict);
+                }
                 break;
             case ELEM_EXEC_ARRAY:
                 ind(depth);

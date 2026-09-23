@@ -2,6 +2,6 @@ unittest
 test
 *.o
 *.dSYM/
-forth_modoki
+postscript_modoki
 trace
 unittest_asan

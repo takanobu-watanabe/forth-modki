@@ -2,7 +2,7 @@ CFLAGS = -Wall -Wextra -std=c11 -g
 
 UNITTEST = unittest
 UNITTEST_ASAN = unittest_asan
-TARGET   = forth_modoki
+TARGET   = postscript_modoki
 TRACE    = trace
 
 # 両方のビルドで共有するソース（main を持たないもの）

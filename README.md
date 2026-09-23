@@ -7,7 +7,7 @@ C言語で書いた、PostScript風スタック指向言語のインタプリタ
 
 ```
 $ echo "/double { 2 mul } def 5 double" > sample.ps
-$ ./forth_modoki sample.ps
+$ ./postscript_modoki sample.ps
 result: 10
 ```
 
@@ -20,7 +20,7 @@ result: 10
 ## ビルドと実行
 
 ```bash
-make              # unittest / forth_modoki / trace をビルド
+make              # unittest / postscript_modoki / trace をビルド
 make test         # ユニットテストを実行
 make test-asan    # AddressSanitizer 付きでテストを実行
 make trace-run    # 内部動作のトレースを表示
@@ -30,7 +30,7 @@ make clean
 `clang` または `gcc`（C11対応）だけで動きます。依存ライブラリはありません。
 
 ```bash
-./forth_modoki <file.ps>        # ファイルを実行し、スタックのトップを表示
+./postscript_modoki <file.ps>        # ファイルを実行し、スタックのトップを表示
 ./trace "1 2 add"               # 任意のコードの内部動作を表示
 ```
 
@@ -95,7 +95,7 @@ make clean
 `sample/` に `.ps` のサンプルを置いています。
 
 ```bash
-$ ./forth_modoki sample/fact.ps
+$ ./postscript_modoki sample/fact.ps
 result: 120
 ```
 

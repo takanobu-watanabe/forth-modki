@@ -217,8 +217,29 @@ static void trace_element(Element e, Stack *st, Dict *dict, int depth) {
     dump_stack(st, depth + 1);
 }
 
+// 配列の中に jmp / jmp_not_if が含まれているか
+// （12章で ifelse をコンパイル時に展開するようになったので、関数の本体に現れる）
+static bool contains_jmp(ExecArray *ea) {
+    for (int i = 0; i < ea->count; i++) {
+        Element *e = &ea->items[i];
+        if (e->type == ELEM_EXEC_NAME
+            && (strcmp(e->u.name, "jmp") == 0 || strcmp(e->u.name, "jmp_not_if") == 0)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // eval_exec_array と同じことを、途中経過を出しながらやる
 static void trace_exec_array(ExecArray *ea, Stack *st, Dict *dict, int depth) {
+    // jmp は pc を書き換える命令なので、1要素ずつ辿るこのモードでは追えない。
+    // 中身はまとめて本物の実行エンジンで動かし、結果だけ表示する。
+    if (contains_jmp(ea)) {
+        ind(depth);
+        printf("（jmp を含むので中身はまとめて実行する。1ステップずつ見るには -vm）\n");
+        eval_exec_array(ea, st, dict);
+        return;
+    }
     for (int i = 0; i < ea->count; i++) {
         ind(depth);
         printf("items[%d]:\n", i);

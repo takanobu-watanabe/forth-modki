@@ -903,6 +903,68 @@ void test_run_jmp_not_if(void) {
     check_run_stack("0 2 jmp_not_if 100 200 3 }", f, 1);
 }
 
+// --- 12章: ifelse の静的コード生成 -----------------------------------------
+
+// { } の中の cond { A } { B } ifelse が jmp の列に展開されていること
+//   1 { 10 } { 20 } ifelse  →  1  3 jmp_not_if  10  1 jmp  20
+void test_compile_ifelse_expanded(void) {
+    CharSource src = make_src_from_string("1 { 10 } { 20 } ifelse }");
+    ExecArray *ea = compile_exec_array(&src);
+
+    UT_EQ_INT(7, ea->count);
+    UT_EQ_ELEM_INT(1, ea->items[0]);
+    UT_EQ_ELEM_INT(3, ea->items[1]);                 // A(1個) + 2
+    UT_EQ_INT(ELEM_EXEC_NAME, ea->items[2].type);
+    UT_EQ_INT(0, strcmp("jmp_not_if", ea->items[2].u.name));
+    UT_EQ_ELEM_INT(10, ea->items[3]);
+    UT_EQ_ELEM_INT(1, ea->items[4]);                 // B(1個)
+    UT_EQ_INT(ELEM_EXEC_NAME, ea->items[5].type);
+    UT_EQ_INT(0, strcmp("jmp", ea->items[5].u.name));
+    UT_EQ_ELEM_INT(20, ea->items[6]);
+
+    exec_array_free(ea);
+    fclose(src.fp);
+}
+
+// 展開したものを実行して、真偽どちらの枝も正しく選ばれること
+void test_run_ifelse_expanded(void) {
+    int t[] = { 10 };
+    int f[] = { 20 };
+    check_run_stack("1 { 10 } { 20 } ifelse }", t, 1);
+    check_run_stack("0 { 10 } { 20 } ifelse }", f, 1);
+
+    // 枝の中身が複数要素でも、飛ぶ数が正しく計算されること
+    int t2[] = { 1, 2, 3 };
+    int f2[] = { 4, 5 };
+    check_run_stack("1 { 1 2 } { 4 5 } ifelse 3 }", t2, 3);
+    check_run_stack("0 { 1 2 } { 4 } ifelse 5 }", f2, 2);
+}
+
+// 入れ子の ifelse。内側が先にコンパイル（展開）され、それが外側に
+// コピーされる。jmp が相対ジャンプなので、コピーしても飛び先がずれない。
+void test_run_ifelse_nested(void) {
+    int a[] = { 2 };
+    int b[] = { 3 };
+    check_run_stack("1 { 0 { 1 } { 2 } ifelse } { 3 } ifelse }", a, 1);
+    check_run_stack("0 { 0 { 1 } { 2 } ifelse } { 3 } ifelse }", b, 1);
+}
+
+// 直前の2要素が { } でない場合は、コンパイル時に中身が分からないので
+// 展開せず ifelse のまま残す（実行時の prim_ifelse に任せる）。
+// ※ 実行まではテストしない。a と書くと辞書の { } は「実行」されてしまい、
+//   ブロックを値として取り出すには load が要る（未実装）ため。
+void test_compile_ifelse_fallback(void) {
+    CharSource src = make_src_from_string("1 a b ifelse }");
+    ExecArray *ea = compile_exec_array(&src);
+
+    UT_EQ_INT(4, ea->count);
+    UT_EQ_INT(ELEM_EXEC_NAME, ea->items[3].type);
+    UT_EQ_INT(0, strcmp("ifelse", ea->items[3].u.name));
+
+    exec_array_free(ea);
+    fclose(src.fp);
+}
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -964,6 +1026,10 @@ int main(void) {
     test_run_nested();
     test_run_jmp();
     test_run_jmp_not_if();
+    test_compile_ifelse_expanded();
+    test_run_ifelse_expanded();
+    test_run_ifelse_nested();
+    test_compile_ifelse_fallback();
     
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

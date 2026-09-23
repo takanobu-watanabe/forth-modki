@@ -16,11 +16,16 @@ void eval_element(Element e, Stack *st, Dict *dict) {
     contstack_free(cs);
 }
 
+// 実行可能配列の中身を最後まで実行する。
+// 配列全体を1枚のフレームとして積んで run するので、中で jmp / jmp_not_if が
+// 使われていても動く（要素を1つずつ別々に評価すると、jmp が書き換える
+// フレームが存在しない）。
 void eval_exec_array(ExecArray *ea, Stack *st, Dict *dict) {
-    // ea->count 個の items を、先頭から順に eval_element で評価する
-    for (int i = 0; i < ea->count; i++) {
-        eval_element(ea->items[i], st, dict);
-    }
+    ContStack *cs = contstack_new();
+
+    contstack_push(cs, ea);
+    run(cs, st, dict);
+    contstack_free(cs);
 }
 
 void eval(CharSource *src, Stack *st, Dict *dict) {

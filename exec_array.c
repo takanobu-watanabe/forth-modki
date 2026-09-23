@@ -1,6 +1,8 @@
 #include "exec_array.h"
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
+#include <stdbool.h>
 
 ExecArray *exec_array_new(int count) {
     ExecArray *array = malloc(sizeof(ExecArray)+sizeof(Element)*count);
@@ -13,37 +15,96 @@ void exec_array_free(ExecArray *ea) {
     free(ea);
 }
 
+// 容量が足りなければ倍にしてから、items[*i] に e を入れて *i を進める。
+// realloc で配列の場所が変わることがあるので、新しいポインタを返す。
+// 呼び出し側は必ず array = push_item(array, ...) と受け直すこと。
+static ExecArray *push_item(ExecArray *array, int *i, int *capacity, Element e) {
+    if (*i == *capacity) {
+        ExecArray *tmp;
+
+        *capacity *= 2;
+        tmp = realloc(array, sizeof(ExecArray) + sizeof(Element) * *capacity);
+        assert(tmp != NULL);
+        array = tmp;
+    }
+    array->items[*i] = e;
+    (*i)++;
+    return array;
+}
+
+// ea の要素をすべて末尾に追加する
+static ExecArray *push_all(ExecArray *array, int *i, int *capacity, ExecArray *ea) {
+    for (int k = 0; k < ea->count; k++) {
+        array = push_item(array, i, capacity, ea->items[k]);
+    }
+    return array;
+}
+
+// 直前の2要素が { A } { B } なら、ifelse を jmp の列に展開できる
+static bool can_expand_ifelse(ExecArray *array, int i) {
+    return i >= 2
+        && array->items[i - 2].type == ELEM_EXEC_ARRAY
+        && array->items[i - 1].type == ELEM_EXEC_ARRAY;
+}
+
+// 12章: ifelse の静的コード生成
+//
+//   cond { A } { B } ifelse
+//     ↓
+//   cond  N1 jmp_not_if  A...  N2 jmp  B...
+//
+//   N1 = A の要素数 + 2   偽のとき「A...  N2 jmp」を飛び越えて B の先頭へ
+//   N2 = B の要素数       真のとき A を実行したあと B を飛び越えて終わりへ
+//
+// cond は ifelse より前にすでに詰まっているので触らない。
+// 置き換えるのは直前の { A } { B } の2要素だけ。
+static ExecArray *expand_ifelse(ExecArray *array, int *i, int *capacity) {
+    ExecArray *a = array->items[*i - 2].u.exec_array;
+    ExecArray *b = array->items[*i - 1].u.exec_array;
+
+    *i -= 2;   // { A } { B } の2要素を取り消す（ここから上書きしていく）
+
+    array = push_item(array, i, capacity, element_int(a->count + 2));
+    array = push_item(array, i, capacity, element_exec_name("jmp_not_if"));
+    array = push_all(array, i, capacity, a);
+    array = push_item(array, i, capacity, element_int(b->count));
+    array = push_item(array, i, capacity, element_exec_name("jmp"));
+    array = push_all(array, i, capacity, b);
+
+    // 中身はコピーしたので、A と B の入れ物はもう要らない
+    exec_array_free(a);
+    exec_array_free(b);
+    return array;
+}
+
 ExecArray* compile_exec_array(CharSource *src) {
     Token out_token;
     int capacity = 8;
     int i = 0;
-    
+
     ExecArray *array = exec_array_new(capacity);
     while (parse_one(src, &out_token)) {
-        if (i == capacity) {
-            capacity *= 2;
-            ExecArray *tmp = realloc(array, sizeof(ExecArray) + sizeof(Element) * capacity);
-            assert(tmp != NULL);
-            array = tmp;
-        }
         switch (out_token.type) {
-            case TOKEN_OPEN_BRACE:{
+            case TOKEN_OPEN_BRACE: {
                 ExecArray *inner = compile_exec_array(src);
-                array->items[i] = element_exec_array(inner);
-                i++;
+                array = push_item(array, &i, &capacity, element_exec_array(inner));
                 break;
             }
             case TOKEN_INT:
-                array->items[i] = element_int(out_token.u.ival);
-                i++;
+                array = push_item(array, &i, &capacity, element_int(out_token.u.ival));
                 break;
             case TOKEN_LITERAL_NAME:
-                array->items[i] = element_literal_name(out_token.u.name);
-                i++;
+                array = push_item(array, &i, &capacity, element_literal_name(out_token.u.name));
                 break;
             case TOKEN_EXEC_NAME:
-                array->items[i] = element_exec_name(out_token.u.name);
-                i++;
+                // { A } { B } ifelse はコンパイル時に jmp の列へ展開する。
+                // ブロックが変数経由で渡されるなど、コンパイル時に中身が
+                // 分からない場合は、名前のまま残して実行時の prim_ifelse に任せる。
+                if (strcmp(out_token.u.name, "ifelse") == 0 && can_expand_ifelse(array, i)) {
+                    array = expand_ifelse(array, &i, &capacity);
+                } else {
+                    array = push_item(array, &i, &capacity, element_exec_name(out_token.u.name));
+                }
                 break;
             case TOKEN_CLOSE_BRACE:
                 array->count = i;
@@ -54,4 +115,3 @@ ExecArray* compile_exec_array(CharSource *src) {
     }
     return NULL;
 }
-

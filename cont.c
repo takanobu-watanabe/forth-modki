@@ -52,3 +52,8 @@ bool contstack_is_empty(ContStack *cs) {
 int contstack_size(ContStack *cs) {
     return cs->top;
 }
+
+Continuation *contstack_at(ContStack *cs, int i) {
+    assert(0 <= i && i < cs->top);
+    return &cs->frames[i];
+}

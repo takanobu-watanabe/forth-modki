@@ -32,6 +32,9 @@ Continuation *contstack_top(ContStack *cs);
 void contstack_pop(ContStack *cs);
 
 bool contstack_is_empty(ContStack *cs);
+
+// 下から i 番目（0 が底）のフレームを返す。表示・デバッグ用。
+Continuation *contstack_at(ContStack *cs, int i);
 int contstack_size(ContStack *cs);
 
 #endif

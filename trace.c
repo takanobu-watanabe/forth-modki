@@ -8,6 +8,7 @@
 // 動きをそのまま表示するものではない。
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
@@ -286,7 +287,114 @@ static void run_trace(const char *code) {
     dict_free(dict);
 }
 
+// ===================================================================
+// -vm モード: 11章の run と同じループを、継続スタックの全フレームを
+// 表示しながら1ステップずつ回す。frame と pc の動きを見るためのもの。
+// ===================================================================
+
+#define VM_LABEL_MAX 256
+
+// 各フレームに「誰が積んだか」の名前を付けて表示する
+static char vm_labels[VM_LABEL_MAX][ELEMENT_NAME_MAX_SIZE + 16];
+
+static void vm_show_frames(ContStack *cs) {
+    int n = contstack_size(cs);
+
+    printf("    継続: ");
+    if (n == 0) {
+        printf("[空]");
+    }
+    for (int i = 0; i < n; i++) {
+        Continuation *f = contstack_at(cs, i);
+        printf("[%s pc=%d/%d]", vm_labels[i], f->pc, f->ea->count);
+    }
+    printf("\n");
+}
+
+static void vm_run_trace(const char *code) {
+    Stack *st = stack_new(100);
+    Dict *dict = dict_new();
+    ContStack *cs = contstack_new();
+    char *wrapped;
+    CharSource src;
+    ExecArray *program;
+    int step = 0;
+
+    register_primitives(dict);
+
+    // プログラム全体を { ... } の中身としてコンパイルし、1枚目のフレームにする
+    wrapped = malloc(strlen(code) + 3);
+    sprintf(wrapped, "%s }", code);
+    src = src_from(wrapped);
+    program = compile_exec_array(&src);
+    fclose(src.fp);
+
+    printf("=========================================\n");
+    printf("入力: %s\n\n", code);
+
+    contstack_push(cs, program);
+    snprintf(vm_labels[0], sizeof vm_labels[0], "main");
+    printf("開始: プログラム全体を1枚目のフレームとして積む\n");
+    vm_show_frames(cs);
+    printf("\n");
+
+    // ---- ここから run と同じループ ----
+    while (!contstack_is_empty(cs)) {
+        Continuation *frame = contstack_top(cs);
+        int depth = contstack_size(cs);
+        Element e;
+        int before;
+
+        step++;
+
+        // ① 実行し終わっていたら捨てる（呼び出し元に戻る）
+        if (frame->pc >= frame->ea->count) {
+            printf("(%d) %s は pc=%d で最後まで実行した → フレームを捨てて戻る\n",
+                   step, vm_labels[depth - 1], frame->pc);
+            contstack_pop(cs);
+            vm_show_frames(cs);
+            printf("\n");
+            continue;
+        }
+
+        // ② 今の位置の要素を取り出して、pc を進める
+        e = frame->ea->items[frame->pc];
+        printf("(%d) %s の items[%d] = ", step, vm_labels[depth - 1], frame->pc);
+        brief(&e);
+        printf("  （pc %d → %d）\n", frame->pc, frame->pc + 1);
+        frame->pc++;
+
+        // ③ 評価する
+        before = contstack_size(cs);
+        eval_element_vm(e, st, cs, dict);
+
+        // 評価の結果フレームが積まれたら、その名前を記録する
+        if (contstack_size(cs) > before) {
+            const char *who = (e.type == ELEM_EXEC_NAME) ? e.u.name : "{ }";
+            snprintf(vm_labels[contstack_size(cs) - 1],
+                     sizeof vm_labels[0], "%s", who);
+            printf("    → 新しいフレームを積んだ（呼び出し）\n");
+        }
+        vm_show_frames(cs);
+        dump_stack(st, 2);
+        printf("\n");
+    }
+
+    printf("最終的なスタック:\n");
+    dump_stack(st, 1);
+
+    free(wrapped);
+    stack_free(st);
+    dict_free(dict);
+    contstack_free(cs);
+}
+
 int main(int argc, char **argv) {
+    // ./trace -vm "コード"  → 継続スタックの動きを表示
+    if (argc >= 3 && strcmp(argv[1], "-vm") == 0) {
+        vm_run_trace(argv[2]);
+        return 0;
+    }
     if (argc >= 2) {
         run_trace(argv[1]);
         return 0;

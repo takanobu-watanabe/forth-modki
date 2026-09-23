@@ -3,8 +3,9 @@
 //   make trace-run                      デフォルトの例をトレースする
 //   ./trace "/sq { dup mul } def 7 sq"  任意のコードをトレースする
 //
-// eval / eval_element / eval_exec_array と同じ処理を、途中経過を
-// 出しながらなぞっている（本体には手を入れず、別実装で追いかける）。
+// 言語の評価を、途中経過を出しながらなぞる別実装。
+// 配列・制御構造の表示はCの再帰で辿るため、本体の継続スタックやpcの
+// 動きをそのまま表示するものではない。
 
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +18,7 @@
 #include "element.h"
 #include "exec_array.h"
 #include "primitives.h"
+#include "cont.h"
 
 static CharSource src_from(const char *s) {
     CharSource src;
@@ -172,9 +174,14 @@ static void trace_element(Element e, Stack *st, Dict *dict, int depth) {
             case ELEM_PRIMITIVE:
                 // 制御構造だけは中身も追う。それ以外は C関数を呼ぶだけ。
                 if (!trace_control(e.u.name, st, dict, depth)) {
+                    ContStack *cs = contstack_new();
+
                     ind(depth);
                     printf("  C関数なので呼ぶ\n");
-                    found.u.fn(st, dict);
+                    found.u.fn(st, cs, dict);
+                    // プリミティブが実行予定を積んだ場合も、完了させてから戻る。
+                    run(cs, st, dict);
+                    contstack_free(cs);
                 }
                 break;
             case ELEM_EXEC_ARRAY:

@@ -7,7 +7,8 @@
 #include <stdio.h>
 #include "eval.h"
 
-void prim_add(Stack *st, Dict *dict) {
+void prim_add(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -16,7 +17,8 @@ void prim_add(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival + b.u.ival));
 }
 
-void prim_sub(Stack *st, Dict *dict) {
+void prim_sub(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -25,7 +27,8 @@ void prim_sub(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival - b.u.ival));
 }
 
-void prim_mul(Stack *st, Dict *dict) {
+void prim_mul(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -34,7 +37,8 @@ void prim_mul(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival * b.u.ival));
 }
 
-void prim_div(Stack *st, Dict *dict) {
+void prim_div(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -43,7 +47,8 @@ void prim_div(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival / b.u.ival));
 }
 
-void prim_mod(Stack *st, Dict *dict) {
+void prim_mod(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -52,17 +57,20 @@ void prim_mod(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival % b.u.ival));
 }
 
-void prim_dup(Stack *st, Dict *dict) {
+void prim_dup(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     stack_dup(st);
 }
 
-void prim_pop(Stack *st, Dict *dict) {
+void prim_pop(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     stack_pop(st);
 }
 
-void prim_eq(Stack *st, Dict *dict) {
+void prim_eq(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -71,7 +79,8 @@ void prim_eq(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival == b.u.ival));
 }
 
-void prim_ne(Stack *st, Dict *dict) {
+void prim_ne(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -80,7 +89,8 @@ void prim_ne(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival != b.u.ival));
 }
 
-void prim_lt(Stack *st, Dict *dict) {
+void prim_lt(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -89,7 +99,8 @@ void prim_lt(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival < b.u.ival));
 }
 
-void prim_gt(Stack *st, Dict *dict) {
+void prim_gt(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -98,7 +109,8 @@ void prim_gt(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival > b.u.ival));
 }
 
-void prim_le(Stack *st, Dict *dict) {
+void prim_le(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -107,7 +119,8 @@ void prim_le(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival <= b.u.ival));
 }
 
-void prim_ge(Stack *st, Dict *dict) {
+void prim_ge(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element b = stack_pop(st);
     Element a = stack_pop(st);
@@ -116,12 +129,14 @@ void prim_ge(Stack *st, Dict *dict) {
     stack_push(st, element_int(a.u.ival >= b.u.ival));
 }
 
-void prim_exch(Stack *st, Dict *dict) {
+void prim_exch(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     stack_exch(st);
 }
 
-void prim_if(Stack *st, Dict *dict) {
+void prim_if(Stack *st, ContStack *cs, Dict *dict) {
+    (void)dict;
     Element proc = stack_pop(st);
     Element cond = stack_pop(st);
 
@@ -129,12 +144,13 @@ void prim_if(Stack *st, Dict *dict) {
     assert(cond.type == ELEM_INT);
 
     if (cond.u.ival) {
-        eval_exec_array(proc.u.exec_array, st, dict);
+        contstack_push(cs, proc.u.exec_array);
     }
 }
 
 //"1 { 10 } { 20 } ifelse
-void prim_ifelse(Stack *st, Dict *dict) {
+void prim_ifelse(Stack *st, ContStack *cs, Dict *dict) {
+    (void)dict;
     Element proc2 = stack_pop(st);   // 偽のとき用（後に積まれたので先に出る）
     Element proc1 = stack_pop(st);   // 真のとき用
     Element cond  = stack_pop(st);
@@ -144,19 +160,20 @@ void prim_ifelse(Stack *st, Dict *dict) {
     assert(cond.type == ELEM_INT);
     // 3つとも型を assert
 
-    if (cond.u.ival == 1) {
-        eval_exec_array(proc1.u.exec_array, st, dict);
+    // cond が真なら proc1、偽なら proc2 を継続スタックに積む
+    if (cond.u.ival) {
+        contstack_push(cs, proc1.u.exec_array);
     } else {
-        eval_exec_array(proc2.u.exec_array, st, dict);
+        contstack_push(cs, proc2.u.exec_array);
     }
-    // cond が真なら proc1、偽なら proc2 を eval_exec_array で実行
 }
 
 // /name 値 def : 名前と値を辞書に登録する
 // 05章では eval の中で strcmp による特別扱いだったが、09章で PrimitiveFn が
 // Dict* を受け取れるようになったのでプリミティブにできる。
 // 辞書に入れることで { } の中からも使えるようになる。
-void prim_def(Stack *st, Dict *dict) {
+void prim_def(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     Element value = stack_pop(st);
     Element name = stack_pop(st);
 
@@ -168,7 +185,8 @@ void prim_def(Stack *st, Dict *dict) {
 //   [ a b c ] 0 index → [ a b c c ]   （dup と同じ）
 //   [ a b c ] 1 index → [ a b c b ]
 // ローカル変数が無いので、スタック上の「位置」で値を指すための道具。
-void prim_index(Stack *st, Dict *dict) {
+void prim_index(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element n = stack_pop(st);
 
@@ -179,7 +197,8 @@ void prim_index(Stack *st, Dict *dict) {
 // { 条件 } { 本体 } while
 // 条件を実行して結果を取り出し、真である限り本体を繰り返す。
 // if が「1回だけ実行するか決める」のに対し、while は毎回決める。
-void prim_while(Stack *st, Dict *dict) {
+void prim_while(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     Element body = stack_pop(st);
     Element cond = stack_pop(st);
 
@@ -203,7 +222,8 @@ void prim_while(Stack *st, Dict *dict) {
 // print : 値を1つ取り出して表示する
 // default: を書かず5種類すべてを列挙しているので、将来 ElementType に
 // 値を足したとき -Wswitch が対応漏れを教えてくれる。
-void prim_print(Stack *st, Dict *dict) {
+void prim_print(Stack *st, ContStack *cs, Dict *dict) {
+    (void)cs;
     (void)dict;
     Element e = stack_pop(st);
 

@@ -5,30 +5,15 @@
 #include "dict.h"
 #include "parser.h"
 #include "exec_array.h"
+#include "cont.h"
 
-// ELEM_EXEC_NAME なら辞書を引いて実行/積む、それ以外はそのまま積む。
 void eval_element(Element e, Stack *st, Dict *dict) {
-    if (e.type == ELEM_EXEC_NAME) {
-        Element elem;
+    ContStack *cs = contstack_new();
 
-        if (dict_get(dict, e.u.name, &elem)) {
-            switch (elem.type) {
-                case ELEM_PRIMITIVE:
-                    elem.u.fn(st, dict);
-                    break;
-                case ELEM_EXEC_ARRAY:
-                    eval_exec_array(elem.u.exec_array, st, dict);
-                    break;
-                default:
-                    stack_push(st, elem);
-                    break;
-            }
-        } else {
-            fprintf(stderr, "unknown word: %s\n", e.u.name);
-        }
-    } else {
-        stack_push(st, e);
-    }
+    eval_element_vm(e, st, cs, dict);
+    run(cs, st, dict);
+
+    contstack_free(cs);
 }
 
 void eval_exec_array(ExecArray *ea, Stack *st, Dict *dict) {
@@ -62,5 +47,49 @@ void eval(CharSource *src, Stack *st, Dict *dict) {
             default:
                 break;
         }
+    }
+}
+
+void eval_element_vm(Element e, Stack *st, ContStack *cs, Dict *dict) {
+    if (e.type == ELEM_EXEC_NAME) {
+        Element found;
+
+        if (dict_get(dict, e.u.name, &found)) {
+            switch (found.type) {
+                case ELEM_PRIMITIVE:
+                    found.u.fn(st, cs, dict);
+                    break;
+                case ELEM_EXEC_ARRAY:
+                    contstack_push(cs, found.u.exec_array);
+                    break;
+                default:
+                    stack_push(st, found);
+                    break;
+            }
+        } else {
+            fprintf(stderr, "unknown word: %s\n", e.u.name);
+        }
+
+    } else {
+        stack_push(st, e);
+    }
+}
+
+void run(ContStack *cs, Stack *st, Dict *dict) {
+    while (!contstack_is_empty(cs)) {
+        Continuation *frame = contstack_top(cs);
+
+        // ① 実行し終わっていたら捨てる（呼び出し元に戻る）
+         if (frame->pc >= frame->ea->count) {
+            contstack_pop(cs);
+            continue;
+        }
+
+        // ② 今の位置の要素を取り出して、pc を進める
+        Element e = frame->ea->items[frame->pc];
+        frame->pc++;
+
+        // ③ 評価する
+        eval_element_vm(e, st, cs, dict);
     }
 }

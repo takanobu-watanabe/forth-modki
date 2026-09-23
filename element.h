@@ -8,7 +8,9 @@
 // 評価するとき、中の名前を辞書で引く必要がある。
 typedef struct Stack Stack;
 typedef struct Dict Dict;
-typedef void (*PrimitiveFn)(Stack *st, Dict *dict);
+typedef struct ContStack ContStack;
+
+typedef void (*PrimitiveFn)(Stack *st, ContStack *cs, Dict *dict);
 
 // 前方宣言。中身（flexible array member を使った定義）は exec_array.h にある。
 // ここではポインタとしてしか使わないので、不完全型のままでよい。

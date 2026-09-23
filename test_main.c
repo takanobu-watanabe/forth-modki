@@ -7,6 +7,7 @@
 #include "dict.h"
 #include "primitives.h"
 #include "exec_array.h"
+#include "cont.h"
 
 // Element が ELEM_INT で、期待した値を持つことを検証する
 #define UT_EQ_ELEM_INT(expected, actual) do { \
@@ -660,10 +661,19 @@ void test_eval_if_uses_stack_below(void) {
 // ifelse は真偽の両方を確認しないと、条件を逆に実装していても気づけない
 void test_eval_ifelse_true(void) {
     check_eval_int("1 { 10 } { 20 } ifelse", 10);
+    check_eval_int("2 { 10 } { 20 } ifelse", 10);
+    check_eval_int("-1 { 10 } { 20 } ifelse", 10);
 }
 
 void test_eval_ifelse_false(void) {
     check_eval_int("0 { 10 } { 20 } ifelse", 20);
+}
+
+// 全体を実行可能配列にして、呼び出し元のフレームを作る。
+// 分岐のフレームを実行し終えたら、元の配列の 3 add に戻ることを確認する。
+void test_eval_ifelse_resumes_caller(void) {
+    check_eval_int("/choose { 1 { 10 } { 20 } ifelse 3 add } def choose", 13);
+    check_eval_int("/choose { 0 { 10 } { 20 } ifelse 3 add } def choose", 23);
 }
 
 // パーサー単体：-5 が TOKEN_INT として読めるか
@@ -752,6 +762,84 @@ void test_eval_print_consumes(void) {
     fclose(src.fp);
 }
 
+void test_contstack_push_pop(void) {
+    ContStack *cs = contstack_new();
+    CharSource src = make_src_from_string("1 2 add }");
+    ExecArray *ea = compile_exec_array(&src);
+
+    UT_TRUE(contstack_is_empty(cs));
+    UT_EQ_INT(0, contstack_size(cs));
+
+    contstack_push(cs, ea);
+    UT_EQ_INT(1, contstack_size(cs));
+    UT_TRUE(!contstack_is_empty(cs));
+
+    // 積んだ直後は pc が 0
+    UT_EQ_INT(0, contstack_top(cs)->pc);
+
+    // pc を進めると、次に top を取ったときも進んだ値が見える
+    contstack_top(cs)->pc = 2;
+    UT_EQ_INT(2, contstack_top(cs)->pc);
+
+    contstack_pop(cs);
+    UT_TRUE(contstack_is_empty(cs));
+
+    exec_array_free(ea);
+    contstack_free(cs);
+    fclose(src.fp);
+}
+
+void test_run_add(void) {
+    CharSource src = make_src_from_string("1 2 add }");
+    ExecArray *ea = compile_exec_array(&src);
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    ContStack *cs = contstack_new();
+
+    register_primitives(dict);
+    contstack_push(cs, ea);        // 「これから ea を実行する」
+    run(cs, st, dict);             // 継続スタックが空になるまで回す
+
+    UT_EQ_INT(1, stack_size(st));
+    UT_EQ_ELEM_INT(3, stack_pop(st));
+    UT_TRUE(contstack_is_empty(cs));   // 最後は空になっているはず
+
+    stack_free(st);
+    dict_free(dict);
+    contstack_free(cs);
+    exec_array_free(ea);
+    fclose(src.fp);
+}
+
+void test_run_nested(void) {
+    CharSource src1 = make_src_from_string("2 mul }");
+    ExecArray *inner = compile_exec_array(&src1);
+
+    CharSource src2 = make_src_from_string("5 inner }");
+    ExecArray *outer = compile_exec_array(&src2);
+
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    ContStack *cs = contstack_new();
+
+    register_primitives(dict);
+    dict_put(dict, "inner", element_exec_array(inner));   // 先に辞書に登録
+
+    contstack_push(cs, outer);
+    run(cs, st, dict);
+
+    UT_EQ_ELEM_INT(10, stack_pop(st));
+    UT_TRUE(contstack_is_empty(cs));
+
+    stack_free(st);
+    dict_free(dict);
+    contstack_free(cs);
+    exec_array_free(outer);
+    exec_array_free(inner);
+    fclose(src1.fp);
+    fclose(src2.fp);
+}
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -800,6 +888,7 @@ int main(void) {
     test_eval_if_uses_stack_below();
     test_eval_ifelse_true();
     test_eval_ifelse_false();
+    test_eval_ifelse_resumes_caller();
     test_parse_one_negative_int();
     test_eval_negative_literal();
     test_eval_abs();
@@ -807,6 +896,9 @@ int main(void) {
     test_eval_index_does_not_consume();
     test_eval_while();
     test_parse_comment();
+    test_contstack_push_pop();
+    test_run_add();
+    test_run_nested();
     
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

@@ -6,11 +6,11 @@ TARGET   = postscript_modoki
 TRACE    = trace
 
 # 両方のビルドで共有するソース（main を持たないもの）
-LIB_SRCS  = parser.c stack.c eval.c dict.c element.c primitives.c exec_array.c
+LIB_SRCS  = parser.c stack.c eval.c dict.c element.c primitives.c exec_array.c cont.c
 TEST_SRCS = test_main.c $(LIB_SRCS)
 MAIN_SRCS = main.c $(LIB_SRCS)
 TRACE_SRCS = trace.c $(LIB_SRCS)
-HDRS      = parser.h stack.h eval.h dict.h element.h primitives.h exec_array.h test_util.h
+HDRS      = parser.h stack.h eval.h dict.h element.h primitives.h exec_array.h cont.h test_util.h
 
 .PHONY: all test test-asan trace-run clean
 

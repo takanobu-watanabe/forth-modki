@@ -1,0 +1,36 @@
+% FizzBuzz（1〜15）
+%
+% 文字列型がまだ無いので、数値コードで代用する。
+%   Fizz     → -1
+%   Buzz     → -2
+%   FizzBuzz → -3
+%   それ以外 → その数字そのもの
+%
+% 期待する出力:
+%   1 2 -1 4 -2 -1 7 8 -1 -2 11 -1 13 14 -3
+%
+% 「i が n で割り切れる」は  i n mod 0 eq  で判定する。
+% 15 から先に調べるのが要点。3 から調べると、15 のときに
+% Fizz で確定してしまい FizzBuzz にならない。
+
+/i 1 def
+
+{ i 15 le }        % i が 15 以下の間くり返す
+{
+  i 15 mod 0 eq
+    { -3 print }               % 15 の倍数 → FizzBuzz
+    {
+      i 3 mod 0 eq
+        { -1 print }           % 3 の倍数 → Fizz
+        {
+          i 5 mod 0 eq
+            { -2 print }       % 5 の倍数 → Buzz
+            { i print }        % どれでもない → 数字をそのまま
+          ifelse
+        }
+      ifelse
+    }
+  ifelse
+
+  /i i 1 add def   % i を1増やす
+} while

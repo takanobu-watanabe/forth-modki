@@ -2,7 +2,9 @@
 
 #include "stack.h"
 #include "element.h"
+#include "exec_array.h"   // print で ExecArray の count を読むため
 #include <assert.h>
+#include <stdio.h>
 #include "eval.h"
 
 void prim_add(Stack *st, Dict *dict) {
@@ -198,6 +200,33 @@ void prim_while(Stack *st, Dict *dict) {
     }
 }
 
+// print : 値を1つ取り出して表示する
+// default: を書かず5種類すべてを列挙しているので、将来 ElementType に
+// 値を足したとき -Wswitch が対応漏れを教えてくれる。
+void prim_print(Stack *st, Dict *dict) {
+    (void)dict;
+    Element e = stack_pop(st);
+
+    switch (e.type) {
+    case ELEM_INT:
+        printf("%d\n", e.u.ival);
+        break;
+    case ELEM_LITERAL_NAME:
+        printf("/%s\n", e.u.name);
+        break;
+    case ELEM_EXEC_NAME:
+        printf("%s\n", e.u.name);
+        break;
+    case ELEM_EXEC_ARRAY:
+        printf("{ ... }（%d要素）\n", e.u.exec_array->count);
+        break;
+    case ELEM_PRIMITIVE:
+        printf("<組み込み関数>\n");
+        break;
+    }
+}
+
+
 void register_primitives(Dict *dict) {
     dict_put(dict, "add", element_primitive(prim_add));
     dict_put(dict, "sub", element_primitive(prim_sub));
@@ -218,4 +247,5 @@ void register_primitives(Dict *dict) {
     dict_put(dict, "index", element_primitive(prim_index));
     dict_put(dict, "while", element_primitive(prim_while));
     dict_put(dict, "def", element_primitive(prim_def));
+    dict_put(dict, "print", element_primitive(prim_print));
 }

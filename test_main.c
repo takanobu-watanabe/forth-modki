@@ -736,6 +736,22 @@ void test_eval_abs(void) {
     check_eval_int("0 dup 0 lt { -1 mul } if", 0);    // 0 は負ではないので何もしない
 }
 
+void test_eval_print_consumes(void) {
+    CharSource src = make_src_from_string("99 42 print");
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+
+    register_primitives(dict);
+    eval(&src, st, dict);
+
+    UT_EQ_INT(1, stack_size(st));      // 42 だけ消えた
+    UT_EQ_ELEM_INT(99, stack_pop(st));
+
+    stack_free(st);
+    dict_free(dict);
+    fclose(src.fp);
+}
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();

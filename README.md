@@ -1,4 +1,4 @@
-# forth_modoki
+# postscript_modoki
 
 C言語で書いた、PostScript風スタック指向言語のインタプリタです。
 

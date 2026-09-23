@@ -5,3 +5,4 @@ test
 postscript_modoki
 trace
 unittest_asan
+sample/ghostscript/

@@ -174,6 +174,15 @@ static void trace_element(Element e, Stack *st, Dict *dict, int depth) {
             switch (found.type) {
             case ELEM_PRIMITIVE:
                 // 制御構造だけは中身も追う。それ以外は C関数を呼ぶだけ。
+                if (strcmp(e.u.name, "jmp") == 0 || strcmp(e.u.name, "jmp_not_if") == 0) {
+                    // jmp 系は「実行中のフレームの pc」を書き換える命令。
+                    // このモードにはフレームが無いので実行できない。
+                    ind(depth);
+                    printf("  %s は継続スタックのフレームが必要です。\n", e.u.name);
+                    ind(depth);
+                    printf("  ./trace -vm \"...\" で実行してください\n");
+                    exit(1);
+                }
                 if (!trace_control(e.u.name, st, dict, depth)) {
                     ContStack *cs = contstack_new();
 

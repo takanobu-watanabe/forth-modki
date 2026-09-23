@@ -840,6 +840,69 @@ void test_run_nested(void) {
     fclose(src2.fp);
 }
 
+void test_run_jmp(void) {
+    CharSource src = make_src_from_string("1 2 jmp 100 200 3 }");
+    ExecArray *ea = compile_exec_array(&src);
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    ContStack *cs = contstack_new();
+
+    register_primitives(dict);
+    contstack_push(cs, ea);
+    run(cs, st, dict);
+
+    UT_EQ_INT(2, stack_size(st));        // 100 と 200 は積まれていない
+    UT_EQ_ELEM_INT(3, stack_pop(st));
+    UT_EQ_ELEM_INT(1, stack_pop(st));
+
+    stack_free(st);
+    dict_free(dict);
+    contstack_free(cs);
+    exec_array_free(ea);
+    fclose(src.fp);
+}
+
+
+// 条件 n jmp_not_if を { } の中で run して、残ったスタックを配列で検証する
+static void check_run_stack(const char *code, const int *expected, int count) {
+    int fail_before = g_test_fail_count;
+    CharSource src = make_src_from_string(code);
+    ExecArray *ea = compile_exec_array(&src);
+    Stack *st = stack_new(10);
+    Dict *dict = dict_new();
+    ContStack *cs = contstack_new();
+
+    register_primitives(dict);
+    contstack_push(cs, ea);
+    run(cs, st, dict);
+
+    UT_EQ_INT(count, stack_size(st));
+    if (stack_size(st) == count) {
+        for (int i = count - 1; i >= 0; i--) {   // てっぺんから順に取り出す
+            UT_EQ_ELEM_INT(expected[i], stack_pop(st));
+        }
+    }
+    if (g_test_fail_count != fail_before) {
+        printf("    ↑ 入力: \"%s\"\n", code);
+    }
+
+    stack_free(st);
+    dict_free(dict);
+    contstack_free(cs);
+    exec_array_free(ea);
+    fclose(src.fp);
+}
+
+void test_run_jmp_not_if(void) {
+    // 真なら飛ばない
+    int t[] = { 100, 200, 3 };
+    check_run_stack("1 2 jmp_not_if 100 200 3 }", t, 3);
+
+    // 偽なら 100 200 を飛ばす
+    int f[] = { 3 };
+    check_run_stack("0 2 jmp_not_if 100 200 3 }", f, 1);
+}
+
 int main(void) {
     test_parse_int_single();
     test_parse_int_with_spaces();
@@ -899,6 +962,8 @@ int main(void) {
     test_contstack_push_pop();
     test_run_add();
     test_run_nested();
+    test_run_jmp();
+    test_run_jmp_not_if();
     
     if (g_test_fail_count == 0) {
         printf("ALL TESTS PASSED\n");

@@ -246,6 +246,32 @@ void prim_print(Stack *st, ContStack *cs, Dict *dict) {
     }
 }
 
+void prim_jmp(Stack *st, ContStack *cs, Dict *dict) {
+    (void)dict;
+    
+    Element n = stack_pop(st);
+    assert(n.type == ELEM_INT);
+    Continuation *frame = contstack_top(cs);
+    frame->pc += n.u.ival;
+}
+
+
+// 条件 n jmp_not_if : 条件が偽(0)なら n 個飛ぶ。真なら何もせず次へ進む。
+//   条件 2 jmp_not_if A B C   → 真なら A B C、偽なら C だけ
+// これ1つで if が作れる。
+void prim_jmp_not_if(Stack *st, ContStack *cs, Dict *dict) {
+    (void)dict;
+    Element n = stack_pop(st);       // 飛ぶ数（後に積まれたので先に出る）
+    Element cond = stack_pop(st);    // 条件
+
+    assert(n.type == ELEM_INT);
+    assert(cond.type == ELEM_INT);
+
+    if (!cond.u.ival) {
+        Continuation *frame = contstack_top(cs);
+        frame->pc += n.u.ival;
+    }
+}
 
 void register_primitives(Dict *dict) {
     dict_put(dict, "add", element_primitive(prim_add));
@@ -268,4 +294,6 @@ void register_primitives(Dict *dict) {
     dict_put(dict, "while", element_primitive(prim_while));
     dict_put(dict, "def", element_primitive(prim_def));
     dict_put(dict, "print", element_primitive(prim_print));
+    dict_put(dict, "jmp", element_primitive(prim_jmp));
+    dict_put(dict, "jmp_not_if", element_primitive(prim_jmp_not_if));
 }

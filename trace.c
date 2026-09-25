@@ -362,6 +362,18 @@ static void vm_run_trace(const char *code) {
     printf("=========================================\n");
     printf("入力: %s\n\n", code);
 
+    // コンパイル結果（main の items）をすべて表示する。
+    // 実行時に飛ばされる要素も含めて、配列に何が入っているかが分かる。
+    printf("コンパイル結果（main の items）:\n");
+    for (int k = 0; k < program->count; k++) {
+        printf("    items[%d] = ", k);
+        detail(&program->items[k], 2);
+        if (program->items[k].type != ELEM_EXEC_ARRAY) {
+            printf("\n");
+        }
+    }
+    printf("\n");
+
     contstack_push(cs, program);
     snprintf(vm_labels[0], sizeof vm_labels[0], "main");
     printf("開始: プログラム全体を1枚目のフレームとして積む\n");
